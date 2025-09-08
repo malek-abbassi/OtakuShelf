@@ -78,6 +78,8 @@ This will execute the test suite and provide feedback on the test results.
 
 The project uses ESLint for linting the codebase.
 
+### Local Linting
+
 To check for linting issues, run:
 
 ```bash
@@ -92,3 +94,8 @@ pnpm run lint:fix
 ```
 
 This will attempt to fix any linting issues that can be automatically resolved.
+
+### CI/CD Linting
+
+The project is set up with a GitHub Actions workflow to automatically lint the code on pull requests. This ensures that all code changes adhere to the defined coding standards before being merged.
+If the pipeline fails, you can run the linting commands locally to identify and fix issues before pushing your changes again.

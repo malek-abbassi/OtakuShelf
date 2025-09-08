@@ -70,3 +70,30 @@ You can also access the alternative documentation at `http://localhost:8000/redo
 ```bash
 pipenv run test
 ```
+
+## Linting and Formatting
+
+### Local Linting and Formatting
+
+The project uses `ruff` for linting and formatting. You can run the following commands:
+
+```bash
+pipenv run lint
+```
+
+To automatically fix linting issues, run:
+
+```bash
+pipenv run lint-fix
+```
+
+To format the codebase, run:
+
+```bash
+pipenv run format
+```
+
+### CI/CD Linting
+
+The project is set up with a GitHub Actions workflow to automatically lint the code on pull requests. This ensures that all code changes adhere to the defined coding standards before being merged.
+If the pipeline fails, you can run the linting commands locally to identify and fix issues before pushing your changes again.
