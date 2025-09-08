@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = {extras = ["standard"], version = "*"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+
+[scripts]
+start = "fastapi run src/main.py" # Start the FastAPI application in production mode
+dev = "fastapi dev src/main.py" # Start the FastAPI application in development mode with auto-reload
+test = "pytest" # Run tests using pytest
