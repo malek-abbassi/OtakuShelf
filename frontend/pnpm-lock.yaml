@@ -38,6 +38,9 @@ importers:
       nuxt:
         specifier: ^4.1.1
         version: 4.1.1(@parcel/watcher@2.5.1)(@vue/compiler-sfc@3.5.21)(better-sqlite3@12.2.0)(db0@0.3.2(better-sqlite3@12.2.0))(eslint@9.35.0(jiti@2.5.1))(ioredis@5.7.0)(lightningcss@1.30.1)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.50.1)(terser@5.44.0)(typescript@5.9.2)(vite@7.1.5(jiti@2.5.1)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1))(yaml@2.8.1)
+      supertokens-web-js:
+        specifier: ^0.16.0
+        version: 0.16.0
       typescript:
         specifier: ^5.6.3
         version: 5.9.2
@@ -1420,6 +1423,9 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
+  '@simplewebauthn/browser@13.1.2':
+    resolution: {integrity: sha512-aZnW0KawAM83fSBUgglP5WofbrLbLyr7CoPqYr66Eppm7zO86YX6rrCjRB3hQKPrL7ATvY4FVXlykZ6w6FwYYw==}
+
   '@sindresorhus/is@4.6.0':
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
@@ -2143,6 +2149,9 @@ packages:
 
   brotli@1.3.3:
     resolution: {integrity: sha512-oTKjJdShmDuGW94SyyaoQvAjf30dZaHnjJ8uAF+u2/vGJkJbJPJAT1gDiOJP5v1Zb6f9KEyW/1HpuaWIXtGHPg==}
+
+  browser-tabs-lock@1.3.0:
+    resolution: {integrity: sha512-g6nHaobTiT0eMZ7jh16YpD2kcjAp+PInbiVq3M1x6KKaEIVhT4v9oURNIpZLOZ3LQbQ3XYfNhMAb/9hzNLIWrw==}
 
   browserslist@4.25.4:
     resolution: {integrity: sha512-4jYpcjabC606xJ3kw2QwGEZKX0Aw7sgQdZCvIK9dhVSPh76BKo+C+btT1RRofH7B+8iNpEbgGNVWiLki5q93yg==}
@@ -4827,6 +4836,15 @@ packages:
     resolution: {integrity: sha512-5JRxVqC8I8NuOUjzBbvVJAKNM8qoVuH0O77h4WInc/qC2q5IreqKxYwgkga3PfA22OayK2ikceb/B26dztPl+Q==}
     engines: {node: '>=16'}
 
+  supertokens-js-override@0.0.4:
+    resolution: {integrity: sha512-r0JFBjkMIdep3Lbk3JA+MpnpuOtw4RSyrlRAbrzMcxwiYco3GFWl/daimQZ5b1forOiUODpOlXbSOljP/oyurg==}
+
+  supertokens-web-js@0.16.0:
+    resolution: {integrity: sha512-wuIdlVJtOsx4ZX0kCyl8lxmmAodXLlMAniZEHyVhsH2fhersh7bMrHpvgN9WoC470HYNC22qpHdlJngvyh/cSA==}
+
+  supertokens-website@20.1.6:
+    resolution: {integrity: sha512-WSehco2PsrFp4WY7h6tDutYyi2nPgJS8lahUadcL/cpBqgEuZ3pjnvN1NDASSNSTfXeO1smm3HrvvLZG5C7qHA==}
+
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -7236,6 +7254,8 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
+  '@simplewebauthn/browser@13.1.2': {}
+
   '@sindresorhus/is@4.6.0': {}
 
   '@sindresorhus/is@7.0.2': {}
@@ -7985,6 +8005,10 @@ snapshots:
   brotli@1.3.3:
     dependencies:
       base64-js: 1.5.1
+
+  browser-tabs-lock@1.3.0:
+    dependencies:
+      lodash: 4.17.21
 
   browserslist@4.25.4:
     dependencies:
@@ -11339,6 +11363,19 @@ snapshots:
   superjson@2.2.2:
     dependencies:
       copy-anything: 3.0.5
+
+  supertokens-js-override@0.0.4: {}
+
+  supertokens-web-js@0.16.0:
+    dependencies:
+      '@simplewebauthn/browser': 13.1.2
+      supertokens-js-override: 0.0.4
+      supertokens-website: 20.1.6
+
+  supertokens-website@20.1.6:
+    dependencies:
+      browser-tabs-lock: 1.3.0
+      supertokens-js-override: 0.0.4
 
   supports-color@10.2.2: {}
 
