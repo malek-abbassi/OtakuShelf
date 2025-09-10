@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     '@nuxt/content',
     '@nuxt/scripts',
   ],
+  css: ['~/assets/css/main.css'],
   eslint: {
     config: {
       standalone: false,

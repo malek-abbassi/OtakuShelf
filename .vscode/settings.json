@@ -1,6 +1,5 @@
 {
     // JS/TS settings
-
     // Disable the default formatter, use eslint instead
     "prettier.enable": false,
     "editor.formatOnSave": false,
@@ -86,7 +85,22 @@
         "pcss",
         "postcss"
     ],
-
-
+    // Tailwind CSS settings
+    "files.associations": {
+        "*.css": "tailwindcss"
+    },
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "tailwindCSS.classAttributes": [
+        "class",
+        "ui"
+    ],
+    "tailwindCSS.experimental.classRegex": [
+        [
+            "ui:\\s*{([^)]*)\\s*}",
+            "(?:'|\"|`)([^']*)(?:'|\"|`)"
+        ]
+    ]
     // Python settings
 }

@@ -41,6 +41,9 @@ importers:
       supertokens-web-js:
         specifier: ^0.16.0
         version: 0.16.0
+      tailwindcss:
+        specifier: ^4.1.13
+        version: 4.1.13
       typescript:
         specifier: ^5.6.3
         version: 5.9.2

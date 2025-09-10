@@ -125,130 +125,114 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="auth-container">
-    <div v-if="!isLoggedIn" class="auth-form">
-      <h2>{{ isSignUp ? 'Sign Up' : 'Sign In' }}</h2>
+  <div class="flex justify-center items-center min-h-screen p-4">
+    <UCard v-if="!isLoggedIn" class="w-full max-w-md">
+      <template #header>
+        <h2 class="text-2xl font-bold text-center">
+          {{ isSignUp ? 'Create Account' : 'Welcome Back' }}
+        </h2>
+        <p class="text-gray-500 text-center mt-1">
+          {{ isSignUp ? 'Sign up for your account' : 'Sign in to your account' }}
+        </p>
+      </template>
 
-      <form @submit.prevent="handleSubmit">
-        <div class="form-group">
-          <label for="email">Email:</label>
-          <input
-            id="email"
+      <UForm :state="{ email, password }" class="space-y-4" @submit="handleSubmit">
+        <UFormGroup label="Email" name="email" required>
+          <UInput
             v-model="email"
             type="email"
-            required
-            class="form-input"
-          >
-        </div>
+            placeholder="Enter your email"
+            icon="i-heroicons-envelope"
+            size="lg"
+          />
+        </UFormGroup>
 
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input
-            id="password"
+        <UFormGroup label="Password" name="password" required>
+          <UInput
             v-model="password"
             type="password"
-            required
-            class="form-input"
+            placeholder="Enter your password"
+            icon="i-heroicons-lock-closed"
+            size="lg"
+          />
+        </UFormGroup>
+
+        <UButton
+          type="submit"
+          block
+          size="lg"
+          :loading="false"
+        >
+          {{ isSignUp ? 'Create Account' : 'Sign In' }}
+        </UButton>
+      </UForm>
+
+      <template #footer>
+        <div class="text-center">
+          <p class="text-sm text-gray-600">
+            {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
+          </p>
+          <UButton
+            variant="ghost"
+            size="sm"
+            class="mt-1"
+            @click="isSignUp = !isSignUp"
           >
+            {{ isSignUp ? 'Sign In' : 'Sign Up' }}
+          </UButton>
         </div>
 
-        <button type="submit" class="submit-btn">
-          {{ isSignUp ? 'Sign Up' : 'Sign In' }}
-        </button>
-      </form>
+        <UAlert
+          v-if="message"
+          :color="message.includes('successful') ? 'success' : 'error'"
+          variant="soft"
+          :title="message"
+          class="mt-4"
+        />
+      </template>
+    </UCard>
 
-      <p class="toggle-mode">
-        {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
-        <button class="toggle-btn" @click="isSignUp = !isSignUp">
-          {{ isSignUp ? 'Sign In' : 'Sign Up' }}
-        </button>
-      </p>
+    <UCard v-else class="w-full max-w-md">
+      <template #header>
+        <div class="text-center">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-heroicons-check-circle" class="text-green-600 text-2xl" />
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900">
+            Welcome!
+          </h2>
+          <p class="text-gray-500 mt-1">
+            You're successfully signed in
+          </p>
+        </div>
+      </template>
 
-      <p v-if="message" class="message">
-        {{ message }}
-      </p>
-    </div>
+      <div class="space-y-4">
+        <UCard class="bg-gray-50">
+          <div class="flex items-center space-x-3">
+            <UIcon name="i-heroicons-user-circle" class="text-gray-400" />
+            <div>
+              <p class="text-sm font-medium text-gray-900">
+                User ID
+              </p>
+              <p class="text-sm text-gray-500">
+                {{ userInfo }}
+              </p>
+            </div>
+          </div>
+        </UCard>
 
-    <div v-else class="user-dashboard">
-      <h2>Welcome!</h2>
-      <p>User ID: {{ userInfo }}</p>
-      <button class="logout-btn" @click="signOut">
-        Sign Out
-      </button>
-    </div>
+        <UButton
+          block
+          variant="outline"
+          color="error"
+          size="lg"
+          @click="signOut"
+        >
+          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-2" />
+          Sign Out
+        </UButton>
+      </div>
+    </UCard>
   </div>
 </template>
-
-<style scoped>
-.auth-container {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.auth-form {
-  background: #f5f5f5;
-  padding: 2rem;
-  border-radius: 8px;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.submit-btn,
-.logout-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.submit-btn:hover,
-.logout-btn:hover {
-  background-color: #0056b3;
-}
-
-.toggle-mode {
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.message {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  background-color: #e9ecef;
-}
-
-.user-dashboard {
-  text-align: center;
-}
-</style>
