@@ -125,7 +125,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="flex justify-center items-center min-h-screen p-4">
+  <div class="flex justify-center items-center  p-4">
     <UCard v-if="!isLoggedIn" class="w-full max-w-md">
       <template #header>
         <h2 class="text-2xl font-bold text-center">
