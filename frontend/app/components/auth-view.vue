@@ -195,13 +195,13 @@ async function handleSubmit() {
     <UCard v-else class="w-full max-w-md">
       <template #header>
         <div class="text-center">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <UIcon name="i-heroicons-check-circle" class="text-green-600 text-2xl" />
+          <div class="w-16 h-16 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-heroicons-check-circle" class="text-success-600 dark:text-success-400 text-2xl" />
           </div>
-          <h2 class="text-2xl font-bold text-gray-900">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
             Welcome!
           </h2>
-          <p class="text-gray-500 mt-1">
+          <p class="text-gray-500 dark:text-gray-400 mt-1">
             You're successfully signed in
           </p>
         </div>

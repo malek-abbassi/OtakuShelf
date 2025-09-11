@@ -12,6 +12,18 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
   ],
   css: ['~/assets/css/main.css'],
+
+  colorMode: {
+    preference: 'system', // default value
+    fallback: 'light', // fallback value if not system preference found
+    hid: 'nuxt-color-mode-script',
+    globalName: '__NUXT_COLOR_MODE__',
+    componentName: 'ColorScheme',
+    classPrefix: '',
+    classSuffix: '',
+    storageKey: 'nuxt-color-mode',
+  },
+
   eslint: {
     config: {
       standalone: false,

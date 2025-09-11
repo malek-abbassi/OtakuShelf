@@ -1,2 +1,11 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+/* Custom anime-themed gradients using theme aliases */
+.anime-gradient {
+  @apply bg-gradient-to-br from-primary-600 via-primary-600 to-secondary-600;
+}
+
+.dark .anime-gradient {
+  @apply from-primary-800 to-secondary-800;
+}
