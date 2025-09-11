@@ -4,11 +4,27 @@
     <header class="bg-white shadow-sm">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <UIcon name="i-heroicons-book-open" class="text-3xl text-primary-600" />
-            <NuxtLink to="/" class="text-2xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
-              OtakuShelf
-            </NuxtLink>
+          <div class="flex items-center space-x-8">
+            <div class="flex items-center space-x-2">
+              <UIcon name="i-heroicons-book-open" class="text-3xl text-primary-600" />
+              <NuxtLink to="/" class="text-2xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
+                OtakuShelf
+              </NuxtLink>
+            </div>
+            <nav class="hidden md:flex items-center space-x-6">
+              <NuxtLink
+                to="/anime"
+                class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+              >
+                Discover Anime
+              </NuxtLink>
+              <NuxtLink
+                to="/about"
+                class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+              >
+                About
+              </NuxtLink>
+            </nav>
           </div>
           <UButton to="/auth" color="primary" variant="solid">
             <UIcon name="i-heroicons-user-circle" class="mr-2" />

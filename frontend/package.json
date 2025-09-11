@@ -22,6 +22,8 @@
     "@unhead/vue": "^2.0.3",
     "better-sqlite3": "^12.2.0",
     "eslint": "^9.0.0",
+    "graphql": "^16.11.0",
+    "graphql-request": "^7.2.0",
     "nuxt": "^4.1.1",
     "supertokens-web-js": "^0.16.0",
     "tailwindcss": "^4.1.13",

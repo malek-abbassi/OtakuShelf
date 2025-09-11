@@ -12,7 +12,11 @@
             Keep your otaku journey organized and never lose track of what you've watched or read.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <UButton to="/auth" size="lg" color="primary">
+            <UButton to="/anime" size="lg" color="primary">
+              <UIcon name="i-heroicons-magnifying-glass" class="mr-2" />
+              Discover Anime
+            </UButton>
+            <UButton to="/auth" size="lg" variant="outline" color="primary">
               <UIcon name="i-heroicons-rocket-launch" class="mr-2" />
               Get Started
             </UButton>
