@@ -6,7 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 from supertokens_python import get_all_cors_headers
 from supertokens_python.framework.fastapi import get_middleware
 from supertokens_python import init, InputAppInfo, SupertokensConfig
-from supertokens_python.recipe import emailpassword, session
+from supertokens_python.recipe import emailpassword, session, dashboard
 
 init(
     app_info=InputAppInfo(
@@ -24,6 +24,7 @@ init(
     recipe_list=[
         session.init(),  # initializes session features
         emailpassword.init(),
+        dashboard.init(),
     ],
     mode="asgi",  # use wsgi if you are running using gunicorn
 )
