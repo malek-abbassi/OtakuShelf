@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { useAnimeDetails } from '../composables/use-anime-details';
-import { useAnimeUtils } from '../composables/use-anime-utils';
+import type { Anime } from '~/composables/use-ani-list';
+
+import { useAnimeDetails } from '~/composables/use-anime-details';
+import { useAnimeUtils } from '~/composables/use-anime-utils';
 
 // Meta
 definePageMeta({
@@ -29,6 +31,17 @@ const {
   retryLoadDetails,
 } = useAnimeDetails();
 
+// Handle anime selection
+function handleAnimeSelect(anime: Anime) {
+  showAnimeDetails(anime);
+}
+
+// Handle successful watchlist addition
+function handleWatchlistAdd(anime: Anime) {
+  // You could show a toast notification here
+  console.error('Added to watchlist:', getAnimeTitle(anime.title));
+}
+
 // Update URL when search is performed
 watch(() => route.query.q, (newQuery) => {
   if (newQuery) {
@@ -54,9 +67,10 @@ watch(() => route.query.q, (newQuery) => {
       </div>
 
       <!-- Search Component -->
-      <AnimeSearch
+      <AnimeSearchEnhanced
         :initial-query="(route.query.q as string) || ''"
-        @select-anime="showAnimeDetails"
+        @select-anime="handleAnimeSelect"
+        @added-to-watchlist="handleWatchlistAdd"
       />
 
       <!-- Anime Details Modal - Official UModal Implementation -->

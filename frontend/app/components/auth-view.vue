@@ -5,7 +5,7 @@ import type { SignInSchema, SignUpSchema } from '~/types/auth';
 const isSignUp = ref(false);
 
 // Use auth composable
-const { isLoggedIn, userInfo, isLoading, signUp, signIn, signOut } = useAuth();
+const { isLoggedIn, userProfile, isLoading, signUp, signIn, signOut } = useAuth();
 
 // Handle form submission
 async function handleSubmit(data: SignInSchema | SignUpSchema) {
@@ -40,7 +40,7 @@ function handleSignOut() {
 
     <UserProfile
       v-else
-      :user-info="userInfo"
+      :user-info="userProfile"
       @sign-out="handleSignOut"
     />
   </div>

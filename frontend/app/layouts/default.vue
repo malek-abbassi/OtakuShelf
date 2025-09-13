@@ -1,3 +1,20 @@
+<script setup lang="ts">
+// Composables
+const { isLoggedIn, userProfile, signOut } = useAuth();
+const router = useRouter();
+
+// Methods
+async function handleSignOut() {
+  try {
+    await signOut();
+    await router.push('/');
+  }
+  catch (err) {
+    console.error('Error signing out:', err);
+  }
+}
+</script>
+
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
     <!-- Navigation Header -->
@@ -19,6 +36,13 @@
                 Discover Anime
               </NuxtLink>
               <NuxtLink
+                v-if="isLoggedIn"
+                to="/watchlist"
+                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >
+                My Watchlist
+              </NuxtLink>
+              <NuxtLink
                 to="/about"
                 class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
               >
@@ -34,10 +58,50 @@
               color="neutral"
               @click="$colorMode.preference = $colorMode.value === 'dark' ? 'light' : 'dark'"
             />
-            <UButton to="/auth" color="primary" variant="solid">
-              <UIcon name="i-heroicons-user-circle" class="mr-2" />
-              Sign In
-            </UButton>
+
+            <!-- Authentication Actions -->
+            <div v-if="!isLoggedIn">
+              <UButton to="/auth" color="primary" variant="solid">
+                <UIcon name="i-heroicons-user-circle" class="mr-2" />
+                Sign In
+              </UButton>
+            </div>
+            <div v-else class="flex items-center space-x-2">
+              <UDropdown
+                :items="[
+                  [
+                    {
+                      label: userProfile?.fullName || userProfile?.username || 'Profile',
+                      icon: 'i-heroicons-user',
+                      disabled: true,
+                    },
+                  ],
+                  [
+                    {
+                      label: 'My Watchlist',
+                      icon: 'i-heroicons-list-bullet',
+                      click: () => $router.push('/watchlist'),
+                    },
+                    {
+                      label: 'Settings',
+                      icon: 'i-heroicons-cog-6-tooth',
+                      click: () => console.error('Settings not implemented'),
+                    },
+                  ],
+                  [
+                    {
+                      label: 'Sign Out',
+                      icon: 'i-heroicons-arrow-right-on-rectangle',
+                      click: handleSignOut,
+                    },
+                  ],
+                ]"
+              >
+                <UButton variant="ghost" color="neutral">
+                  <UIcon name="i-heroicons-user-circle" class="text-xl" />
+                </UButton>
+              </UDropdown>
+            </div>
           </div>
         </div>
       </div>

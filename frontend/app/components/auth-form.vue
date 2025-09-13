@@ -22,6 +22,8 @@ const emit = defineEmits<AuthFormEmits>();
 const state = reactive({
   email: '',
   password: '',
+  username: '',
+  fullName: '',
 });
 
 // Password visibility state
@@ -40,6 +42,8 @@ function handleToggleMode() {
   // Clear form state when switching modes
   state.email = '';
   state.password = '';
+  state.username = '';
+  state.fullName = '';
   showPassword.value = false;
   emit('toggleMode');
 }
@@ -48,6 +52,8 @@ function handleToggleMode() {
 watch(() => props.isSignUp, () => {
   state.email = '';
   state.password = '';
+  state.username = '';
+  state.fullName = '';
   showPassword.value = false;
 });
 </script>
@@ -81,6 +87,39 @@ watch(() => props.isSignUp, () => {
           type="email"
           placeholder="Enter your email"
           icon="i-heroicons-envelope"
+          size="lg"
+          :disabled="isLoading"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField
+        v-if="isSignUp"
+        label="Username"
+        name="username"
+        required
+      >
+        <UInput
+          v-model="state.username"
+          type="text"
+          placeholder="Choose a username"
+          icon="i-heroicons-user"
+          size="lg"
+          :disabled="isLoading"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField
+        v-if="isSignUp"
+        label="Full Name"
+        name="fullName"
+      >
+        <UInput
+          v-model="state.fullName"
+          type="text"
+          placeholder="Enter your full name (optional)"
+          icon="i-heroicons-identification"
           size="lg"
           :disabled="isLoading"
           class="w-full"

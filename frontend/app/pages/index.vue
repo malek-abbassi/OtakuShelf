@@ -1,3 +1,16 @@
+<script setup lang="ts">
+// Composables
+const { isLoggedIn, userProfile } = useAuth();
+
+// Meta
+useSeoMeta({
+  title: 'OtakuShelf - Your Personal Anime & Manga Collection Manager',
+  ogTitle: 'OtakuShelf - Your Personal Anime & Manga Collection Manager',
+  description: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized.',
+  ogDescription: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized.',
+});
+</script>
+
 <template>
   <NuxtLayout>
     <div class="flex-1">
@@ -11,7 +24,21 @@
             Organize, track, and discover your favorite anime series and manga volumes with ease.
             Keep your otaku journey organized and never lose track of what you've watched or read.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+
+          <!-- Authenticated User Actions -->
+          <div v-if="isLoggedIn" class="flex flex-col sm:flex-row gap-4 justify-center">
+            <UButton to="/watchlist" size="lg" color="neutral" variant="solid">
+              <UIcon name="i-heroicons-list-bullet" class="mr-2" />
+              My Watchlist
+            </UButton>
+            <UButton to="/anime" size="lg" variant="outline" color="neutral">
+              <UIcon name="i-heroicons-magnifying-glass" class="mr-2" />
+              Discover Anime
+            </UButton>
+          </div>
+
+          <!-- Non-authenticated User Actions -->
+          <div v-else class="flex flex-col sm:flex-row gap-4 justify-center">
             <UButton to="/anime" size="lg" color="neutral" variant="solid">
               <UIcon name="i-heroicons-magnifying-glass" class="mr-2" />
               Discover Anime
@@ -24,6 +51,19 @@
               <UIcon name="i-heroicons-play" class="mr-2" />
               Learn More
             </UButton>
+          </div>
+
+          <!-- User Welcome Message -->
+          <div v-if="isLoggedIn && userProfile" class="mt-8">
+            <p class="text-lg text-violet-100">
+              Welcome back, {{ userProfile.fullName || userProfile.username }}!
+              <span v-if="userProfile.watchlistCount > 0">
+                You have {{ userProfile.watchlistCount }} anime in your watchlist.
+              </span>
+              <span v-else>
+                Ready to start your anime journey?
+              </span>
+            </p>
           </div>
         </div>
       </section>
@@ -41,64 +81,126 @@
           </div>
 
           <div class="grid md:grid-cols-3 gap-8">
-            <UCard class="text-center">
+            <UCard class="text-center hover:shadow-lg transition-shadow">
               <template #header>
                 <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto">
-                  <UIcon name="i-heroicons-rectangle-stack" class="text-primary-600 dark:text-primary-400 text-2xl" />
+                  <UIcon name="i-heroicons-list-bullet" class="text-primary-600 dark:text-primary-400 text-2xl" />
                 </div>
               </template>
               <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Collection Management
+                Smart Watchlist
               </h4>
               <p class="text-gray-600 dark:text-gray-400">
-                Organize your anime and manga collection with custom tags, ratings, and status tracking.
+                Keep track of anime you're watching, planning to watch, completed, or dropped. Never lose track of your progress.
               </p>
             </UCard>
 
-            <UCard class="text-center">
+            <UCard class="text-center hover:shadow-lg transition-shadow">
               <template #header>
                 <div class="w-16 h-16 bg-secondary-100 dark:bg-secondary-900/30 rounded-full flex items-center justify-center mx-auto">
-                  <UIcon name="i-heroicons-chart-bar" class="text-secondary-600 dark:text-secondary-400 text-2xl" />
+                  <UIcon name="i-heroicons-magnifying-glass" class="text-secondary-600 dark:text-secondary-400 text-2xl" />
                 </div>
               </template>
               <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Progress Tracking
+                Discover Anime
               </h4>
               <p class="text-gray-600 dark:text-gray-400">
-                Keep track of episodes watched, chapters read, and get insights into your viewing habits.
+                Search through thousands of anime titles from AniList. Get detailed information, ratings, and add them to your watchlist instantly.
               </p>
             </UCard>
 
-            <UCard class="text-center">
+            <UCard class="text-center hover:shadow-lg transition-shadow">
               <template #header>
-                <div class="w-16 h-16 bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center mx-auto">
-                  <UIcon name="i-heroicons-sparkles" class="text-error-600 dark:text-error-400 text-2xl" />
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+                  <UIcon name="i-heroicons-user-circle" class="text-green-600 dark:text-green-400 text-2xl" />
                 </div>
               </template>
               <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Recommendations
+                Personal Profile
               </h4>
               <p class="text-gray-600 dark:text-gray-400">
-                Discover new anime and manga based on your preferences and viewing history.
+                Create your profile, track your viewing statistics, and share your anime taste with the community.
               </p>
             </UCard>
           </div>
         </div>
       </section>
 
-      <!-- CTA Section -->
-      <section class="py-20 bg-primary-600 dark:bg-primary-800">
+      <!-- Call to Action Section -->
+      <section v-if="!isLoggedIn" class="py-20 bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-700 dark:to-secondary-700">
         <div class="container mx-auto px-4 text-center">
           <h3 class="text-3xl font-bold text-white mb-4">
             Ready to Start Your Journey?
           </h3>
-          <p class="text-xl text-primary-100 dark:text-primary-200 mb-8 max-w-2xl mx-auto">
-            Join thousands of anime and manga enthusiasts who trust OtakuShelf to manage their collections.
+          <p class="text-lg text-primary-100 mb-8 max-w-xl mx-auto">
+            Join thousands of anime fans who are already organizing their collections with OtakuShelf.
           </p>
           <UButton to="/auth" size="lg" color="neutral" variant="solid">
-            <UIcon name="i-heroicons-arrow-right" class="mr-2" />
+            <UIcon name="i-heroicons-rocket-launch" class="mr-2" />
             Create Your Account
           </UButton>
+        </div>
+      </section>
+
+      <!-- Quick Stats Section for Logged In Users -->
+      <section v-else-if="userProfile" class="py-20 bg-gray-50 dark:bg-gray-800">
+        <div class="container mx-auto px-4">
+          <div class="text-center mb-12">
+            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Your Anime Stats
+            </h3>
+            <p class="text-lg text-gray-600 dark:text-gray-400">
+              Here's your anime journey so far
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+            <UCard class="text-center">
+              <div class="p-6">
+                <div class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+                  {{ userProfile.watchlistCount }}
+                </div>
+                <div class="text-gray-600 dark:text-gray-400">
+                  Anime in Watchlist
+                </div>
+              </div>
+            </UCard>
+
+            <UCard class="text-center">
+              <div class="p-6">
+                <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400 mb-2">
+                  {{ userProfile.username }}
+                </div>
+                <div class="text-gray-600 dark:text-gray-400">
+                  Your Username
+                </div>
+              </div>
+            </UCard>
+
+            <UCard class="text-center">
+              <div class="p-6">
+                <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {{ new Date(userProfile.createdAt).getFullYear() }}
+                </div>
+                <div class="text-gray-600 dark:text-gray-400">
+                  Member Since
+                </div>
+              </div>
+            </UCard>
+          </div>
+
+          <div class="text-center mt-12">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <UButton to="/watchlist" size="lg" color="primary">
+                <UIcon name="i-heroicons-list-bullet" class="mr-2" />
+                View My Watchlist
+              </UButton>
+              <UButton to="/anime" size="lg" variant="outline" color="primary">
+                <UIcon name="i-heroicons-plus" class="mr-2" />
+                Add More Anime
+              </UButton>
+            </div>
+          </div>
         </div>
       </section>
     </div>
