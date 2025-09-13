@@ -7,6 +7,7 @@ dependencies = [
     "supertokens-python",
     "sqlmodel",
     "pydantic-settings",
+    "psycopg2>=2.9.10",
 ]
 
 [dependency-groups]

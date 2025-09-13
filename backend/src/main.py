@@ -1,53 +1,135 @@
-from typing import Union
+"""
+OtakuShelf Backend API
+Production-ready FastAPI application with SuperTokens authentication.
+"""
+
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from supertokens_python import get_all_cors_headers
-from supertokens_python.framework.fastapi import get_middleware
-from supertokens_python import init, InputAppInfo, SupertokensConfig
+from supertokens_python import (
+    get_all_cors_headers,
+    init,
+    InputAppInfo,
+    SupertokensConfig,
+)
+from supertokens_python.framework.fastapi import get_middleware as get_supertokens_middleware
 from supertokens_python.recipe import emailpassword, session, dashboard
 
+from .config import get_settings
+from .db.core import create_db_and_tables
+from .dependencies import (
+    LoggingMiddleware,
+    ErrorHandlingMiddleware,
+    get_health_check_info,
+)
+from .routers import users_router, watchlist_router
+
+# Load settings
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan manager.
+    Handles startup and shutdown events.
+    """
+    # Startup
+    print("🚀 Starting OtakuShelf API...")
+
+    # Initialize database
+    create_db_and_tables()
+    print("✅ Database initialized")
+
+    yield
+
+    # Shutdown
+    print("🛑 Shutting down OtakuShelf API...")
+
+
+# Initialize SuperTokens
 init(
     app_info=InputAppInfo(
-        app_name="OtakuShelf",
-        api_domain="http://127.0.0.1:8000",
-        website_domain="http://127.0.0.1:3000",
+        app_name=settings.app_name,
+        api_domain=settings.api_domain,
+        website_domain=settings.website_domain,
         api_base_path="/auth",
         website_base_path="/auth",
     ),
     supertokens_config=SupertokensConfig(
-        connection_uri="http://localhost:3567",
-        api_key="someApiKey123123123123" # should match with supertokens setup in docker-compose.yml
+        connection_uri=settings.supertokens_connection_uri,
+        api_key=settings.supertokens_api_key,
     ),
     framework="fastapi",
     recipe_list=[
-        session.init(),  # initializes session features
-        emailpassword.init(),
-        dashboard.init(),
+        session.init(),  # Session management
+        emailpassword.init(),  # Email/password authentication
+        dashboard.init(),  # SuperTokens dashboard
     ],
-    mode="asgi",  # use wsgi if you are running using gunicorn
+    mode="asgi",
 )
 
-app = FastAPI(title="OtakuShelf")
+# Create FastAPI app
+app = FastAPI(
+    title="OtakuShelf API",
+    description="Anime watchlist management API",
+    version="1.0.0",
+    docs_url="/docs" if settings.environment != "production" else None,
+    redoc_url="/redoc" if settings.environment != "production" else None,
+    lifespan=lifespan,
+)
 
-# Add SuperTokens middleware
-app.add_middleware(get_middleware())
+# Add SuperTokens middleware (must be first)
+app.add_middleware(get_supertokens_middleware())
 
+# Add custom middleware
+if settings.environment == "development":
+    app.add_middleware(LoggingMiddleware)
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.add_middleware(ErrorHandlingMiddleware)
 
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Content-Type"] + get_all_cors_headers(),
 )
+
+# Include routers
+app.include_router(users_router, prefix="/api/v1")
+app.include_router(watchlist_router, prefix="/api/v1")
+
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return get_health_check_info()
+
+
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "message": "Welcome to OtakuShelf API",
+        "version": "1.0.0",
+        "docs": "/docs" if settings.environment != "production" else "disabled",
+        "health": "/health",
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.environment == "development",
+        log_level=settings.log_level,
+    )

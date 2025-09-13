@@ -30,10 +30,10 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = Field(default="OtakuShelf", description="Application name")
     api_domain: str = Field(
-        default="http://127.0.0.1:8000", description="API domain for SuperTokens"
+        default="http://localhost:8000", description="API domain for SuperTokens"
     )
     website_domain: str = Field(
-        default="http://127.0.0.1:3000",
+        default="http://localhost:3000",
         description="Frontend domain for CORS and SuperTokens",
     )
 
@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(
         default=["http://127.0.0.1:3000", "http://localhost:3000"],
         description="Allowed CORS origins",
+    )
+
+    # logging settings
+    log_level: Literal["debug", "info", "warning", "error", "critical"] = Field(
+        default="info", description="Logging level"
     )
 
     class Config:
