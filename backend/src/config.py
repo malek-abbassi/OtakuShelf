@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     )
 
     # Security settings
-    environment: Literal["development", "staging", "production"] = Field(
+    environment: Literal["development", "staging", "production", "testing"] = Field(
         default="development", description="Application environment"
     )
 

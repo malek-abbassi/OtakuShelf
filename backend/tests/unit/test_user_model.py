@@ -2,10 +2,11 @@
 Unit tests for User model.
 """
 
-import pytest
 import sys
 from datetime import datetime
 from pathlib import Path
+
+import pytest
 from sqlmodel import Session
 
 # Add the src directory to the Python path
@@ -14,8 +15,8 @@ src_path = backend_path / "src"
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(src_path))
 
-import src.models as models
-from tests.factories import UserFactory
+import src.models as models  # noqa: E402
+from tests.factories import UserFactory  # noqa: E402
 
 
 @pytest.mark.unit

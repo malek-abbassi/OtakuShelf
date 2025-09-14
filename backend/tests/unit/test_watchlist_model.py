@@ -5,6 +5,7 @@ Unit tests for WatchlistItem model.
 import pytest
 from datetime import datetime
 from sqlmodel import Session
+from pydantic import ValidationError
 
 from src.models import WatchlistItem, WatchlistItemCreate, WatchlistItemUpdate
 from tests.factories import WatchlistItemFactory
@@ -145,21 +146,25 @@ class TestWatchlistItemModel:
         """Test notes field length constraint."""
         long_notes = "x" * 1001  # Exceeds max length
         
-        # This should work for the base schema (validation happens at API level)
-        item = WatchlistItemCreate(
-            anime_id=123,
-            anime_title="Test Anime",
-            notes=long_notes
-        )
-        assert len(item.notes) == 1001
+        # This should raise a validation error
+        with pytest.raises(ValidationError) as exc_info:
+            WatchlistItemCreate(
+                anime_id=123,
+                anime_title="Test Anime",
+                notes=long_notes
+            )
+        
+        assert "String should have at most 1000 characters" in str(exc_info.value)
 
     def test_anime_title_length_constraint(self):
         """Test anime title length constraint."""
         long_title = "x" * 201  # Exceeds max length
         
-        # This should work for the base schema (validation happens at API level)
-        item = WatchlistItemCreate(
-            anime_id=123,
-            anime_title=long_title
-        )
-        assert len(item.anime_title) == 201
+        # This should raise a validation error
+        with pytest.raises(ValidationError) as exc_info:
+            WatchlistItemCreate(
+                anime_id=123,
+                anime_title=long_title
+            )
+        
+        assert "String should have at most 200 characters" in str(exc_info.value)

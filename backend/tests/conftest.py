@@ -22,11 +22,11 @@ src_path = backend_path / "src"
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(src_path))
 
-# Now import the modules
-import src.config as config
-import src.db.core as db_core
-import src.main as main
-import src.models as models
+# Local imports after path setup
+import src.config as config  # noqa: E402
+import src.db.core as db_core  # noqa: E402
+import src.main as main  # noqa: E402
+import src.models as models  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -174,14 +174,18 @@ def sample_watchlist_item(test_session, sample_user, sample_watchlist_item_data)
 def mock_supertokens_signup(mocker):
     """Mock SuperTokens signup."""
     from supertokens_python.recipe.emailpassword.interfaces import SignUpOkResult
+    from supertokens_python.types import RecipeUserId
     
-    mock_result = SignUpOkResult(
-        user={
-            "id": "test-st-user-id-123",
-            "email": "test@example.com",
-            "time_joined": 1234567890,
-        }
-    )
+    # Create a simple mock user object with required attributes
+    mock_user = mocker.MagicMock()
+    mock_user.id = "test-st-user-id-123"
+    mock_user.email = "test@example.com"
+    mock_user.time_joined = 1234567890
+    mock_user.tenant_ids = ["public"]
+    
+    mock_result = mocker.MagicMock(spec=SignUpOkResult)
+    mock_result.user = mock_user
+    mock_result.recipe_user_id = RecipeUserId("test-st-user-id-123")
     
     return mocker.patch(
         "src.auth.service.sign_up",
@@ -193,14 +197,18 @@ def mock_supertokens_signup(mocker):
 def mock_supertokens_signin(mocker):
     """Mock SuperTokens signin."""
     from supertokens_python.recipe.emailpassword.interfaces import SignInOkResult
+    from supertokens_python.types import RecipeUserId
     
-    mock_result = SignInOkResult(
-        user={
-            "id": "test-st-user-id-123",
-            "email": "test@example.com",
-            "time_joined": 1234567890,
-        }
-    )
+    # Create a simple mock user object with required attributes
+    mock_user = mocker.MagicMock()
+    mock_user.id = "test-st-user-id-123"
+    mock_user.email = "test@example.com"
+    mock_user.time_joined = 1234567890
+    mock_user.tenant_ids = ["public"]
+    
+    mock_result = mocker.MagicMock(spec=SignInOkResult)
+    mock_result.user = mock_user
+    mock_result.recipe_user_id = RecipeUserId("test-st-user-id-123")
     
     return mocker.patch(
         "src.auth.service.sign_in",
@@ -218,12 +226,24 @@ def authenticated_user_headers():
 
 
 @pytest.fixture
-def mock_get_current_user(mocker, sample_user):
+def mock_get_current_user(sample_user):
     """Mock the get_current_user dependency."""
-    mock = mocker.patch("src.routers.users.get_current_user")
-    mock.return_value = sample_user
+    from src.auth.dependencies import get_current_user, get_current_user_id
     
-    # Also mock for watchlist router
-    mocker.patch("src.routers.watchlist.get_current_user", return_value=sample_user)
+    def _get_current_user_id():
+        return sample_user.supertokens_user_id
     
-    return mock
+    def _get_current_user():
+        return sample_user
+    
+    # Override dependencies in the FastAPI app
+    main.app.dependency_overrides[get_current_user_id] = _get_current_user_id
+    main.app.dependency_overrides[get_current_user] = _get_current_user
+    
+    yield sample_user
+    
+    # Clean up overrides
+    if get_current_user_id in main.app.dependency_overrides:
+        del main.app.dependency_overrides[get_current_user_id]
+    if get_current_user in main.app.dependency_overrides:
+        del main.app.dependency_overrides[get_current_user]

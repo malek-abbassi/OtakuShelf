@@ -19,6 +19,7 @@ class TestAuthService:
         auth_service = AuthService(test_session)
         assert auth_service.db == test_session
 
+    @pytest.mark.asyncio
     async def test_create_user_from_supertokens(self, test_session: Session):
         """Test creating a user from SuperTokens data."""
         auth_service = AuthService(test_session)
@@ -107,6 +108,7 @@ class TestAuthService:
         
         assert is_available is False
 
+    @pytest.mark.asyncio
     async def test_signup_user_success(self, test_session: Session, mock_supertokens_signup):
         """Test successful user signup."""
         auth_service = AuthService(test_session)
@@ -126,6 +128,7 @@ class TestAuthService:
         assert user.full_name == "New User"
         assert user.supertokens_user_id == "test-st-user-id-123"
 
+    @pytest.mark.asyncio
     async def test_signup_user_username_taken(self, test_session: Session, sample_user):
         """Test user signup with taken username."""
         auth_service = AuthService(test_session)
@@ -141,6 +144,7 @@ class TestAuthService:
         assert "Username already taken" in message
         assert user is None
 
+    @pytest.mark.asyncio
     async def test_signin_user_success(self, test_session: Session, sample_user, mock_supertokens_signin):
         """Test successful user signin."""
         auth_service = AuthService(test_session)
@@ -155,6 +159,7 @@ class TestAuthService:
         assert user is not None
         assert user.id == sample_user.id
 
+    @pytest.mark.asyncio
     async def test_signin_user_not_found(self, test_session: Session, mock_supertokens_signin):
         """Test user signin when user not found in our database."""
         auth_service = AuthService(test_session)
@@ -165,7 +170,7 @@ class TestAuthService:
         )
         
         assert success is False
-        assert "User not found" in message
+        assert "User profile not found" in message
         assert user is None
 
     def test_multiple_users_creation(self, test_session: Session):

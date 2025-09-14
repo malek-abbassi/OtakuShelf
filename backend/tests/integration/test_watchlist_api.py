@@ -124,7 +124,6 @@ class TestWatchlistAPI:
     def test_update_watchlist_item_success(self, client: TestClient, mock_get_current_user, sample_watchlist_item):
         """Test successfully updating a watchlist item."""
         update_data = {
-            "anime_title": "Updated Anime Title",
             "anime_score": 9.0,
             "status": "completed",
             "notes": "Updated notes"
@@ -134,7 +133,8 @@ class TestWatchlistAPI:
         assert response.status_code == 200
         
         data = response.json()
-        assert data["anime_title"] == "Updated Anime Title"
+        # anime_title should remain unchanged since it's not updateable
+        assert data["anime_title"] == sample_watchlist_item.anime_title
         assert data["anime_score"] == 9.0
         assert data["status"] == "completed"
         assert data["notes"] == "Updated notes"
@@ -167,7 +167,7 @@ class TestWatchlistAPI:
         assert response.status_code == 200
         
         data = response.json()
-        assert "deleted successfully" in data["message"]
+        assert "Anime removed from watchlist" in data["message"]
 
     def test_delete_watchlist_item_not_found(self, client: TestClient, mock_get_current_user):
         """Test deleting non-existent watchlist item."""

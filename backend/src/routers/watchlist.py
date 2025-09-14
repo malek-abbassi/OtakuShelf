@@ -39,7 +39,7 @@ async def add_to_watchlist(
     existing_item = db.exec(
         select(WatchlistItem).where(
             WatchlistItem.user_id == current_user.id,
-            WatchlistItem.anime_id == watchlist_data.anime_id,
+            WatchlistItem.anime_id == watchlist_data.animeId,
         )
     ).first()
 
@@ -49,7 +49,7 @@ async def add_to_watchlist(
         )
 
     # Create new watchlist item
-    watchlist_item_data = WatchlistItemCreate(**watchlist_data.model_dump())
+    watchlist_item_data = WatchlistItemCreate(**watchlist_data.model_dump(by_alias=True))
     watchlist_item = WatchlistItem(
         **watchlist_item_data.model_dump(), user_id=current_user.id
     )
