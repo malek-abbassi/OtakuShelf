@@ -347,6 +347,7 @@ export function useAuth() {
     signIn,
     signOut,
     checkAuth,
+    fetchUserProfile,
     checkUsernameAvailability,
     updateProfile,
   };
