@@ -97,11 +97,13 @@ async function handleAddToWatchlist(anime: Anime, status: string = 'plan_to_watc
   addingToWatchlist.value.add(anime.id);
 
   try {
+    const score = anime.averageScore || anime.meanScore;
+    const imageUrl = anime.coverImage.large || anime.coverImage.medium;
     const animeData: WatchlistAddSchema = {
       animeId: anime.id,
       animeTitle: anime.title.romaji || anime.title.english || anime.title.native || 'Unknown Title',
-      animePictureUrl: anime.coverImage.large || anime.coverImage.medium,
-      animeScore: anime.averageScore || anime.meanScore || undefined,
+      animePictureUrl: imageUrl && imageUrl.startsWith('http') ? imageUrl : undefined,
+      animeScore: score ? score / 10 : undefined,
       status,
       notes: '',
     };
@@ -292,14 +294,12 @@ onMounted(() => {
           <!-- Watchlist Actions -->
           <template v-if="showWatchlistActions && isLoggedIn" #footer>
             <div v-if="!isInWatchlist(anime.id)" class="flex gap-2">
-              <UDropdown
-                :items="[
-                  WATCH_STATUS_OPTIONS.map(option => ({
-                    label: option.label,
-                    icon: 'i-heroicons-plus',
-                    click: () => handleAddToWatchlist(anime, option.value),
-                  })),
-                ]"
+              <UDropdownMenu
+                :items="WATCH_STATUS_OPTIONS.map(option => ({
+                  label: option.label,
+                  icon: 'i-heroicons-plus',
+                  click: () => handleAddToWatchlist(anime, option.value),
+                }))"
               >
                 <UButton
                   variant="outline"
@@ -316,7 +316,7 @@ onMounted(() => {
                     Add to Watchlist
                   </template>
                 </UButton>
-              </UDropdown>
+              </UDropdownMenu>
             </div>
             <div v-else class="text-center">
               <UBadge
@@ -362,6 +362,7 @@ onMounted(() => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

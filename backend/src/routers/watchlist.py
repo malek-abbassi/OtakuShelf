@@ -58,7 +58,7 @@ async def add_to_watchlist(
     db.commit()
     db.refresh(watchlist_item)
 
-    return WatchlistItemResponse.model_validate(watchlist_item)
+    return WatchlistItemResponse.model_validate(watchlist_item, from_attributes=True)
 
 
 @router.get("", response_model=WatchlistResponse)
@@ -103,12 +103,12 @@ async def get_watchlist(
         status_counts[item.status] = status_counts.get(item.status, 0) + 1
 
     # Convert to response format
-    items = [WatchlistItemResponse.model_validate(item) for item in watchlist_items]
+    items = [WatchlistItemResponse.model_validate(item, from_attributes=True) for item in watchlist_items]
 
     return WatchlistResponse(
         items=items,
-        total_count=total_count,
-        status_counts=status_counts,
+        totalCount=total_count,
+        statusCounts=status_counts,
     )
 
 
@@ -134,7 +134,7 @@ async def get_watchlist_item(
             status_code=status.HTTP_404_NOT_FOUND, detail="Watchlist item not found"
         )
 
-    return WatchlistItemResponse.model_validate(watchlist_item)
+    return WatchlistItemResponse.model_validate(watchlist_item, from_attributes=True)
 
 
 @router.put("/{item_id}", response_model=WatchlistItemResponse)
@@ -169,7 +169,7 @@ async def update_watchlist_item(
     db.commit()
     db.refresh(watchlist_item)
 
-    return WatchlistItemResponse.model_validate(watchlist_item)
+    return WatchlistItemResponse.model_validate(watchlist_item, from_attributes=True)
 
 
 @router.delete("/{item_id}", response_model=SuccessResponse)
@@ -220,7 +220,7 @@ async def get_watchlist_item_by_anime_id(
     if not watchlist_item:
         return None
 
-    return WatchlistItemResponse.model_validate(watchlist_item)
+    return WatchlistItemResponse.model_validate(watchlist_item.model_dump())
 
 
 @router.post("/bulk", response_model=SuccessResponse)

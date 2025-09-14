@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { useAuth } from '~/composables/use-auth';
-
 // Meta
 useHead({
   title: 'My Watchlist - OtakuShelf',
@@ -11,25 +9,12 @@ useHead({
     },
   ],
 });
-
-// Auth check
-const { isLoggedIn } = useAuth();
-
-// Redirect to auth if not logged in
-watchEffect(() => {
-  if (!isLoggedIn.value) {
-    navigateTo('/auth');
-  }
-});
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <ClientOnly>
+  <NuxtLayout>
+    <div class="container mx-auto px-4 py-8">
       <WatchlistView />
-      <template #fallback>
-        <LoadingState message="Loading watchlist..." />
-      </template>
-    </ClientOnly>
-  </div>
+    </div>
+  </NuxtLayout>
 </template>

@@ -16,34 +16,29 @@ const {
   removeFromWatchlist,
 } = useWatchlist();
 
-// Create computed watchlist to match expected format
-const watchlist = computed(() => ({
-  items: watchlistItems.value,
-  statusCounts: statusCounts.value,
-  totalCount: totalCount.value,
-}));
-
 const error = ref<string | null>(null);
 
 // Reactive state
 const selectedStatus = ref<string>('all');
 const searchQuery = ref('');
 const viewMode = ref<'grid' | 'list'>('grid');
+const editingItem = ref<WatchlistItem | null>(null);
+const showEditModal = ref(false);
 
 // Computed properties
 const statusOptions = computed(() => [
-  { value: 'all', label: 'All', count: watchlist.value?.totalCount || 0 },
+  { value: 'all', label: 'All', count: totalCount.value || 0 },
   ...WATCH_STATUS_OPTIONS.map(option => ({
     ...option,
-    count: watchlist.value?.statusCounts[option.value] || 0,
+    count: statusCounts.value[option.value] || 0,
   })),
 ]);
 
 const filteredItems = computed(() => {
-  if (!watchlist.value?.items)
+  if (!watchlistItems.value)
     return [];
 
-  let items = watchlist.value.items;
+  let items = watchlistItems.value;
 
   // Filter by status
   if (selectedStatus.value !== 'all') {
@@ -53,16 +48,50 @@ const filteredItems = computed(() => {
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    items = items.filter((item: WatchlistItem) =>
-      item.animeTitle.toLowerCase().includes(query)
-      || (item.notes && item.notes.toLowerCase().includes(query)),
-    );
+    items = items.filter((item: WatchlistItem) => {
+      const title = item.animeTitle || item.anime_title || '';
+      return title.toLowerCase().includes(query)
+        || (item.notes && item.notes.toLowerCase().includes(query));
+    });
   }
 
   return items;
 });
 
 const hasItems = computed(() => filteredItems.value.length > 0);
+
+// Client-side initialization for Nuxt 4
+const mounted = ref(false);
+
+onMounted(async () => {
+  // Safety timeout to prevent infinite loading
+  const timeoutId = setTimeout(() => {
+    if (!mounted.value) {
+      console.error('WatchlistView: Initialization timeout, forcing mount');
+      mounted.value = true;
+    }
+  }, 5000);
+
+  try {
+    // Check auth status and fetch data
+    const { checkAuth } = useAuth();
+    await checkAuth();
+
+    if (isLoggedIn.value) {
+      await fetchWatchlist();
+    }
+    else {
+      await navigateTo('/auth');
+    }
+  }
+  catch (error) {
+    console.error('WatchlistView: Error during initialization:', error);
+  }
+  finally {
+    clearTimeout(timeoutId);
+    mounted.value = true;
+  }
+});
 
 // Methods
 async function handleStatusChange(item: WatchlistItem, newStatus: string) {
@@ -76,8 +105,8 @@ async function handleStatusChange(item: WatchlistItem, newStatus: string) {
 }
 
 async function handleEdit(item: WatchlistItem) {
-  // TODO: Implement edit modal
-  console.error('Edit functionality not implemented yet:', item.animeTitle);
+  editingItem.value = item;
+  showEditModal.value = true;
 }
 
 async function handleRemove(item: WatchlistItem) {
@@ -98,17 +127,11 @@ function handleStatusFilter(status: string) {
   selectedStatus.value = status;
 }
 
-// Initialize data
-onMounted(() => {
-  fetchWatchlist();
-});
-
-// Watch for auth changes
-watch(isLoggedIn, (newIsLoggedIn) => {
-  if (newIsLoggedIn) {
-    fetchWatchlist();
-  }
-}, { immediate: true });
+async function handleEditUpdated() {
+  showEditModal.value = false;
+  editingItem.value = null;
+  await fetchWatchlist(); // Refresh to get updated data
+}
 </script>
 
 <template>
@@ -175,8 +198,14 @@ watch(isLoggedIn, (newIsLoggedIn) => {
 
     <!-- Loading State -->
     <LoadingState
-      v-if="isLoading && !watchlist"
+      v-if="isLoading && mounted"
       message="Loading your watchlist..."
+    />
+
+    <!-- Initialization State -->
+    <LoadingState
+      v-else-if="!mounted"
+      message="Initializing..."
     />
 
     <!-- Error State -->
@@ -247,5 +276,12 @@ watch(isLoggedIn, (newIsLoggedIn) => {
         />
       </div>
     </div>
+
+    <!-- Edit Modal -->
+    <EditWatchlistModal
+      v-model:open="showEditModal"
+      :item="editingItem"
+      @updated="handleEditUpdated"
+    />
   </div>
 </template>

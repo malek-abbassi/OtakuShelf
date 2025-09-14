@@ -72,6 +72,11 @@ function formatAiringTime(timestamp: number): string {
       </div>
     </div>
 
+    <!-- Add to Watchlist Section -->
+    <div class="mb-6">
+      <AddToWatchlistSection :anime="anime" />
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Content -->
       <div class="lg:col-span-2 space-y-6">

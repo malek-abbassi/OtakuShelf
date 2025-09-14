@@ -67,7 +67,7 @@ async function handleSignOut() {
               </UButton>
             </div>
             <div v-else class="flex items-center space-x-2">
-              <UDropdown
+              <UDropdownMenu
                 :items="[
                   [
                     {
@@ -100,7 +100,7 @@ async function handleSignOut() {
                 <UButton variant="ghost" color="neutral">
                   <UIcon name="i-heroicons-user-circle" class="text-xl" />
                 </UButton>
-              </UDropdown>
+              </UDropdownMenu>
             </div>
           </div>
         </div>

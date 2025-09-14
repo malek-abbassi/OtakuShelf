@@ -90,18 +90,20 @@ class AnimeSearchResult(BaseModel):
 class WatchlistAddRequest(BaseModel):
     """Request to add anime to watchlist."""
 
-    anime_id: int = Field(..., description="AniList anime ID")
-    anime_title: str = Field(..., max_length=200, description="Anime title")
-    anime_picture_url: Optional[str] = Field(
-        default=None, description="Anime cover image URL"
+    animeId: int = Field(..., alias="anime_id", description="AniList anime ID")
+    animeTitle: str = Field(..., alias="anime_title", max_length=200, description="Anime title")
+    animePictureUrl: Optional[str] = Field(
+        default=None, alias="anime_picture_url", description="Anime cover image URL"
     )
-    anime_score: Optional[float] = Field(
-        default=None, ge=0.0, le=10.0, description="Anime score"
+    animeScore: Optional[float] = Field(
+        default=None, alias="anime_score", ge=0.0, le=10.0, description="Anime score"
     )
     status: str = Field(default="plan_to_watch", description="Watch status")
     notes: Optional[str] = Field(
         default=None, max_length=1000, description="User notes"
     )
+
+    model_config = {"populate_by_name": True}
 
 
 class WatchlistUpdateRequest(BaseModel):
@@ -111,28 +113,34 @@ class WatchlistUpdateRequest(BaseModel):
     notes: Optional[str] = Field(
         default=None, max_length=1000, description="User notes"
     )
-    anime_score: Optional[float] = Field(
-        default=None, ge=0.0, le=10.0, description="User rating"
+    animeScore: Optional[float] = Field(
+        default=None, alias="anime_score", ge=0.0, le=10.0, description="User rating"
     )
+
+    model_config = {"populate_by_name": True}
 
 
 class WatchlistItemResponse(BaseModel):
     """Watchlist item response schema."""
 
     id: int
-    anime_id: int
-    anime_title: str
-    anime_picture_url: Optional[str]
-    anime_score: Optional[float]
+    animeId: int = Field(alias="anime_id")
+    animeTitle: str = Field(alias="anime_title") 
+    animePictureUrl: Optional[str] = Field(alias="anime_picture_url")
+    animeScore: Optional[float] = Field(alias="anime_score")
     status: str
     notes: Optional[str]
-    created_at: datetime
-    updated_at: datetime
+    createdAt: datetime = Field(alias="created_at")
+    updatedAt: datetime = Field(alias="updated_at")
+
+    model_config = {"populate_by_name": True}
 
 
 class WatchlistResponse(BaseModel):
     """User's watchlist response schema."""
 
     items: list[WatchlistItemResponse]
-    total_count: int
-    status_counts: dict[str, int]
+    totalCount: int = Field(alias="total_count")
+    statusCounts: dict[str, int] = Field(alias="status_counts")
+
+    model_config = {"populate_by_name": True}

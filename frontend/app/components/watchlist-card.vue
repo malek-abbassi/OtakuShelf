@@ -25,7 +25,20 @@ const statusInfo = computed(() => getStatusInfo(props.item.status));
 
 // Format date for display
 const addedDate = computed(() => {
-  return new Date(props.item.createdAt).toLocaleDateString();
+  // Handle both camelCase and snake_case field names
+  const createdAt = props.item.createdAt || (props.item as any).created_at;
+
+  if (!createdAt) {
+    return 'Invalid Date';
+  }
+
+  try {
+    return new Date(createdAt).toLocaleDateString();
+  }
+  catch (error) {
+    console.error('Date parsing error:', error);
+    return 'Invalid Date';
+  }
 });
 
 // Handle status change
@@ -45,7 +58,18 @@ function handleRemove() {
 
 // Score display
 const scoreDisplay = computed(() => {
-  return props.item.animeScore ? `${props.item.animeScore}/10` : 'Not rated';
+  // Handle both camelCase and snake_case field names
+  const animeScore = props.item.animeScore || (props.item as any).anime_score;
+  return animeScore ? `${animeScore}/10` : 'Not rated';
+});
+
+// Handle field name variations for all fields
+const animeTitle = computed(() => {
+  return props.item.animeTitle || (props.item as any).anime_title || '';
+});
+
+const animePictureUrl = computed(() => {
+  return props.item.animePictureUrl || (props.item as any).anime_picture_url || null;
 });
 </script>
 
@@ -55,9 +79,9 @@ const scoreDisplay = computed(() => {
       <!-- Anime Image -->
       <div class="flex-shrink-0">
         <NuxtImg
-          v-if="item.animePictureUrl"
-          :src="item.animePictureUrl"
-          :alt="item.animeTitle"
+          v-if="animePictureUrl"
+          :src="animePictureUrl"
+          :alt="animeTitle"
           class="w-20 h-28 object-cover rounded-lg"
           loading="lazy"
         />
@@ -76,7 +100,7 @@ const scoreDisplay = computed(() => {
       <div class="flex-1 min-w-0">
         <div class="flex items-start justify-between gap-2">
           <h3 class="font-semibold text-gray-900 dark:text-white truncate">
-            {{ item.animeTitle }}
+            {{ animeTitle }}
           </h3>
 
           <!-- Status Badge -->
@@ -116,7 +140,7 @@ const scoreDisplay = computed(() => {
     <!-- Actions -->
     <template v-if="showActions" #footer>
       <div class="flex items-center justify-between">
-        <UDropdown
+        <UDropdownMenu
           :items="[
             [
               {
@@ -155,7 +179,7 @@ const scoreDisplay = computed(() => {
           >
             Change Status
           </UButton>
-        </UDropdown>
+        </UDropdownMenu>
 
         <div class="flex gap-2">
           <UButton
@@ -186,6 +210,7 @@ const scoreDisplay = computed(() => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -20,23 +20,33 @@ export const watchlistUpdateSchema = z.object({
 export type WatchlistAddSchema = z.output<typeof watchlistAddSchema>;
 export type WatchlistUpdateSchema = z.output<typeof watchlistUpdateSchema>;
 
-// API response types
+// API response types (matching actual API response with snake_case fields)
 export type WatchlistItem = {
   id: number;
-  animeId: number;
-  animeTitle: string;
-  animePictureUrl?: string;
-  animeScore?: number;
+  anime_id: number;
+  anime_title: string;
+  anime_picture_url?: string;
+  anime_score?: number;
   status: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+  // Support both field naming conventions for compatibility
+  animeId?: number;
+  animeTitle?: string;
+  animePictureUrl?: string;
+  animeScore?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type WatchlistResponse = {
   items: WatchlistItem[];
-  totalCount: number;
-  statusCounts: Record<string, number>;
+  total_count: number;
+  status_counts: Record<string, number>;
+  // Support both field naming conventions for compatibility
+  totalCount?: number;
+  statusCounts?: Record<string, number>;
 };
 
 export type AnimeSearchResult = {

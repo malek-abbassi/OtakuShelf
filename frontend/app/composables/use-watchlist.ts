@@ -42,8 +42,8 @@ export function useWatchlist() {
       );
 
       watchlistItems.value = response.items;
-      statusCounts.value = response.statusCounts;
-      totalCount.value = response.totalCount;
+      statusCounts.value = response.status_counts || response.statusCounts || {};
+      totalCount.value = response.total_count || response.totalCount || 0;
 
       return response;
     }
@@ -65,18 +65,20 @@ export function useWatchlist() {
   async function addToWatchlist(animeData: WatchlistAddSchema) {
     isAddingItem.value = true;
     try {
+      const requestBody = {
+        animeId: animeData.animeId,
+        animeTitle: animeData.animeTitle,
+        animePictureUrl: animeData.animePictureUrl,
+        animeScore: animeData.animeScore,
+        status: animeData.status,
+        notes: animeData.notes,
+      };
+
       const response = await $fetch<WatchlistItem>(
         `${API_BASE_URL}/api/v1/watchlist`,
         {
           method: 'POST',
-          body: {
-            anime_id: animeData.animeId,
-            anime_title: animeData.animeTitle,
-            anime_picture_url: animeData.animePictureUrl,
-            anime_score: animeData.animeScore,
-            status: animeData.status,
-            notes: animeData.notes,
-          },
+          body: requestBody,
           credentials: 'include',
         },
       );
@@ -99,7 +101,22 @@ export function useWatchlist() {
     }
     catch (error: any) {
       console.error('Failed to add to watchlist:', error);
-      const errorMessage = error?.data?.detail || error.message || 'Failed to add anime to watchlist';
+
+      // Handle validation errors specifically
+      let errorMessage = 'Failed to add anime to watchlist';
+      if (error?.data?.detail) {
+        if (Array.isArray(error.data.detail)) {
+          // FastAPI validation errors are usually arrays
+          errorMessage = error.data.detail.map((err: any) => err.msg || err).join(', ');
+        }
+        else {
+          errorMessage = error.data.detail;
+        }
+      }
+      else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -122,7 +139,7 @@ export function useWatchlist() {
           body: {
             status: updateData.status,
             notes: updateData.notes,
-            anime_score: updateData.animeScore,
+            animeScore: updateData.animeScore,
           },
           credentials: 'include',
         },

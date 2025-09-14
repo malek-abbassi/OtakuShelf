@@ -46,11 +46,13 @@ async function handleSubmit() {
   isSubmitting.value = true;
 
   try {
+    const score = props.anime.averageScore || props.anime.meanScore;
+    const imageUrl = props.anime.coverImage.large || props.anime.coverImage.medium;
     const animeData: WatchlistAddSchema = {
       animeId: props.anime.id,
       animeTitle: animeTitle.value,
-      animePictureUrl: props.anime.coverImage.large || props.anime.coverImage.medium,
-      animeScore: props.anime.averageScore || props.anime.meanScore || undefined,
+      animePictureUrl: imageUrl && imageUrl.startsWith('http') ? imageUrl : undefined,
+      animeScore: score ? score / 10 : undefined,
       status: selectedStatus.value,
       notes: userNotes.value.trim() || undefined,
     };
