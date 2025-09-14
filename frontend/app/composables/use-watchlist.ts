@@ -15,7 +15,8 @@ export function useWatchlist() {
   const toast = useToast();
 
   const config = useRuntimeConfig();
-  const API_BASE_URL = config.public?.apiBaseUrl || 'http://localhost:8000';
+  const API_BASE_URL = ((config.public?.apiBaseUrl as string) || 'http://localhost:8000')
+    .replace('127.0.0.1', 'localhost'); // Ensure consistent domain for cookies
 
   // Fetch user's watchlist
   async function fetchWatchlist(options: {

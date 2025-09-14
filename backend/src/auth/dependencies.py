@@ -4,6 +4,7 @@ Provides user authentication and authorization.
 """
 
 from typing import Annotated, Optional
+import logging
 
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
@@ -14,9 +15,11 @@ from ..db.core import get_session
 from ..models import User
 from .service import AuthService
 
+logger = logging.getLogger(__name__)
+
 
 async def get_current_user_id(
-    session: SessionContainer = Depends(verify_session()),
+    session: SessionContainer = Depends(verify_session(anti_csrf_check=False)),
 ) -> str:
     """
     Get the current user's SuperTokens ID from the session.

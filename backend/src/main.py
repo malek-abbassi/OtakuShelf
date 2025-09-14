@@ -64,7 +64,7 @@ init(
     ),
     framework="fastapi",
     recipe_list=[
-        session.init(),  # Session management
+        session.init(),  # Session management with default settings  
         emailpassword.init(),  # Email/password authentication
         dashboard.init(),  # SuperTokens dashboard
     ],

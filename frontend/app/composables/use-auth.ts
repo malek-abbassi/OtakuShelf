@@ -13,7 +13,8 @@ export function useAuth() {
   const toast = useToast();
 
   const config = useRuntimeConfig();
-  const API_BASE_URL = (config.public?.apiBaseUrl as string) || 'http://localhost:8000';
+  const API_BASE_URL = ((config.public?.apiBaseUrl as string) || 'http://localhost:8000')
+    .replace('127.0.0.1', 'localhost'); // Ensure consistent domain for cookies
 
   // Initialize SuperTokens if not already done
   function initSuperTokensIfNeeded() {
@@ -36,17 +37,46 @@ export function useAuth() {
   // Fetch user profile from our backend
   async function fetchUserProfile(): Promise<UserProfile | null> {
     try {
-      const response = await $fetch<UserProfile>(`${API_BASE_URL}/api/v1/users/me`, {
+      initSuperTokensIfNeeded();
+
+      // First check if we have a valid session
+      if (!(await Session.doesSessionExist())) {
+        console.warn('No session exists');
+        return null;
+      }
+
+      // Use native fetch with credentials to ensure cookies are sent
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
         method: 'GET',
-        credentials: 'include',
+        credentials: 'include', // This is crucial for sending cookies
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      return response;
+
+      if (!response.ok) {
+        console.error('Failed to fetch user profile:', response.status, response.statusText);
+
+        // If we get 401, the session might be expired
+        if (response.status === 401) {
+          console.warn('Session appears to be invalid, clearing local session');
+          await Session.signOut();
+        }
+        return null;
+      }
+
+      const data = await response.json();
+      return data;
     }
-    catch (error) {
+    catch (error: any) {
       console.error('Failed to fetch user profile:', error);
+
+      // If we get 401, the session might be expired
+      if (error.status === 401 || error.statusCode === 401) {
+        console.warn('Session appears to be invalid, clearing local session');
+        await Session.signOut();
+      }
       return null;
     }
   }

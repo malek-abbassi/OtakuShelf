@@ -7,7 +7,7 @@ export default defineNuxtPlugin(() => {
   SuperTokens.init({
     appInfo: {
       appName: 'OtakuShelf',
-      apiDomain: 'http://localhost:8000',
+      apiDomain: 'http://localhost:8000', // Explicitly use localhost
       apiBasePath: '/auth',
     },
     recipeList: [
