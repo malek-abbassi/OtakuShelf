@@ -4,12 +4,15 @@ import Session from 'supertokens-web-js/recipe/session';
 
 import type { SignInSchema, SignUpSchema, UserProfile } from '~/types/auth';
 
-export function useAuth() {
-  const isLoggedIn = ref(false);
-  const userProfile = ref<UserProfile | null>(null);
-  const isInitialized = ref(false);
-  const isLoading = ref(false);
+// Global state for authentication - shared across all instances
+const globalAuthState = {
+  isLoggedIn: ref(false),
+  userProfile: ref<UserProfile | null>(null),
+  isLoading: ref(false),
+  isInitialized: ref(false),
+};
 
+export function useAuth() {
   const toast = useToast();
 
   const config = useRuntimeConfig();
@@ -18,7 +21,7 @@ export function useAuth() {
 
   // Initialize SuperTokens if not already done
   function initSuperTokensIfNeeded() {
-    if (!isInitialized.value) {
+    if (!globalAuthState.isInitialized.value) {
       SuperTokens.init({
         appInfo: {
           appName: 'OtakuShelf',
@@ -30,7 +33,7 @@ export function useAuth() {
           Session.init(),
         ],
       });
-      isInitialized.value = true;
+      globalAuthState.isInitialized.value = true;
     }
   }
 
@@ -88,29 +91,29 @@ export function useAuth() {
       if (await Session.doesSessionExist()) {
         const profile = await fetchUserProfile();
         if (profile) {
-          isLoggedIn.value = true;
-          userProfile.value = profile;
+          globalAuthState.isLoggedIn.value = true;
+          globalAuthState.userProfile.value = profile;
         }
         else {
-          isLoggedIn.value = false;
-          userProfile.value = null;
+          globalAuthState.isLoggedIn.value = false;
+          globalAuthState.userProfile.value = null;
         }
       }
       else {
-        isLoggedIn.value = false;
-        userProfile.value = null;
+        globalAuthState.isLoggedIn.value = false;
+        globalAuthState.userProfile.value = null;
       }
     }
     catch (error) {
       console.error('Auth check failed:', error);
-      isLoggedIn.value = false;
-      userProfile.value = null;
+      globalAuthState.isLoggedIn.value = false;
+      globalAuthState.userProfile.value = null;
     }
   }
 
   // Sign up function using our backend API
   async function signUp(data: SignUpSchema) {
-    isLoading.value = true;
+    globalAuthState.isLoading.value = true;
     try {
       // First register with our backend
       const response = await $fetch(`${API_BASE_URL}/api/v1/users/signup`, {
@@ -162,13 +165,13 @@ export function useAuth() {
       return { success: false, message: errorMessage };
     }
     finally {
-      isLoading.value = false;
+      globalAuthState.isLoading.value = false;
     }
   }
 
   // Sign in function using our backend API
   async function signIn(data: SignInSchema) {
-    isLoading.value = true;
+    globalAuthState.isLoading.value = true;
     try {
       // First sign in with our backend to validate credentials
       const response = await $fetch(`${API_BASE_URL}/api/v1/users/signin`, {
@@ -218,7 +221,7 @@ export function useAuth() {
       return { success: false, message: errorMessage };
     }
     finally {
-      isLoading.value = false;
+      globalAuthState.isLoading.value = false;
     }
   }
 
@@ -227,8 +230,8 @@ export function useAuth() {
     try {
       initSuperTokensIfNeeded();
       await Session.signOut();
-      isLoggedIn.value = false;
-      userProfile.value = null;
+      globalAuthState.isLoggedIn.value = false;
+      globalAuthState.userProfile.value = null;
       toast.add({
         title: 'Signed Out',
         description: 'You have been successfully signed out.',
@@ -237,10 +240,13 @@ export function useAuth() {
     }
     catch (error) {
       console.error('Sign out error:', error);
+      // Even if there's an error, clear the local state
+      globalAuthState.isLoggedIn.value = false;
+      globalAuthState.userProfile.value = null;
       toast.add({
-        title: 'Error',
-        description: 'An error occurred during sign out',
-        color: 'error',
+        title: 'Signed Out',
+        description: 'You have been signed out.',
+        color: 'info',
       });
     }
   }
@@ -259,7 +265,7 @@ export function useAuth() {
 
   // Update user profile
   async function updateProfile(data: { username?: string; fullName?: string }) {
-    isLoading.value = true;
+    globalAuthState.isLoading.value = true;
     try {
       const response = await $fetch(`${API_BASE_URL}/api/v1/users/me`, {
         method: 'PUT',
@@ -294,20 +300,22 @@ export function useAuth() {
       return { success: false, message: errorMessage };
     }
     finally {
-      isLoading.value = false;
+      globalAuthState.isLoading.value = false;
     }
   }
 
-  // Initialize auth on composable creation
-  onMounted(() => {
-    checkAuth();
-  });
+  // Initialize auth on composable creation - but only on client side
+  if (import.meta.client) {
+    nextTick(() => {
+      checkAuth();
+    });
+  }
 
   return {
     // State
-    isLoggedIn: readonly(isLoggedIn),
-    userProfile: readonly(userProfile),
-    isLoading: readonly(isLoading),
+    isLoggedIn: readonly(globalAuthState.isLoggedIn),
+    userProfile: readonly(globalAuthState.userProfile),
+    isLoading: readonly(globalAuthState.isLoading),
 
     // Methods
     signUp,

@@ -3,6 +3,9 @@
 const { isLoggedIn, userProfile, signOut } = useAuth();
 const router = useRouter();
 
+// Hydration guard to prevent SSR/client mismatch
+const isHydrated = ref(false);
+
 // Methods
 async function handleSignOut() {
   try {
@@ -13,6 +16,49 @@ async function handleSignOut() {
     console.error('Error signing out:', err);
   }
 }
+
+function goToWatchlist() {
+  router.push('/watchlist');
+}
+
+function showSettingsNotImplemented() {
+  console.error('Settings not implemented');
+}
+
+// Computed for dropdown items to ensure proper reactivity and method binding
+const dropdownItems = computed(() => [
+  [
+    {
+      label: userProfile.value?.fullName || userProfile.value?.username || 'Profile',
+      icon: 'i-heroicons-user',
+      disabled: true,
+    },
+  ],
+  [
+    {
+      label: 'My Watchlist',
+      icon: 'i-heroicons-list-bullet',
+      onSelect: goToWatchlist,
+    },
+    {
+      label: 'Settings',
+      icon: 'i-heroicons-cog-6-tooth',
+      onSelect: showSettingsNotImplemented,
+    },
+  ],
+  [
+    {
+      label: 'Sign Out',
+      icon: 'i-heroicons-arrow-right-on-rectangle',
+      onSelect: handleSignOut,
+    },
+  ],
+]);
+
+// Set hydration flag after component is mounted
+onMounted(() => {
+  isHydrated.value = true;
+});
 </script>
 
 <template>
@@ -35,13 +81,15 @@ async function handleSignOut() {
               >
                 Discover Anime
               </NuxtLink>
-              <NuxtLink
-                v-if="isLoggedIn"
-                to="/watchlist"
-                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
-              >
-                My Watchlist
-              </NuxtLink>
+              <ClientOnly>
+                <NuxtLink
+                  v-if="isLoggedIn"
+                  to="/watchlist"
+                  class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+                >
+                  My Watchlist
+                </NuxtLink>
+              </ClientOnly>
               <NuxtLink
                 to="/about"
                 class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
@@ -60,48 +108,30 @@ async function handleSignOut() {
             />
 
             <!-- Authentication Actions -->
-            <div v-if="!isLoggedIn">
-              <UButton to="/auth" color="primary" variant="solid">
-                <UIcon name="i-heroicons-user-circle" class="mr-2" />
-                Sign In
-              </UButton>
-            </div>
-            <div v-else class="flex items-center space-x-2">
-              <UDropdownMenu
-                :items="[
-                  [
-                    {
-                      label: userProfile?.fullName || userProfile?.username || 'Profile',
-                      icon: 'i-heroicons-user',
-                      disabled: true,
-                    },
-                  ],
-                  [
-                    {
-                      label: 'My Watchlist',
-                      icon: 'i-heroicons-list-bullet',
-                      click: () => $router.push('/watchlist'),
-                    },
-                    {
-                      label: 'Settings',
-                      icon: 'i-heroicons-cog-6-tooth',
-                      click: () => console.error('Settings not implemented'),
-                    },
-                  ],
-                  [
-                    {
-                      label: 'Sign Out',
-                      icon: 'i-heroicons-arrow-right-on-rectangle',
-                      click: handleSignOut,
-                    },
-                  ],
-                ]"
-              >
-                <UButton variant="ghost" color="neutral">
-                  <UIcon name="i-heroicons-user-circle" class="text-xl" />
+            <ClientOnly>
+              <div v-if="!isLoggedIn" class="flex items-center space-x-2">
+                <UButton to="/auth" color="primary" variant="solid">
+                  <UIcon name="i-heroicons-user-circle" class="mr-2" />
+                  Sign In
                 </UButton>
-              </UDropdownMenu>
-            </div>
+              </div>
+              <div v-else class="flex items-center space-x-2">
+                <UDropdownMenu :items="dropdownItems">
+                  <UButton variant="ghost" color="neutral">
+                    <UIcon name="i-heroicons-user-circle" class="text-xl" />
+                  </UButton>
+                </UDropdownMenu>
+              </div>
+
+              <template #fallback>
+                <div class="flex items-center space-x-2">
+                  <UButton to="/auth" color="primary" variant="solid">
+                    <UIcon name="i-heroicons-user-circle" class="mr-2" />
+                    Sign In
+                  </UButton>
+                </div>
+              </template>
+            </ClientOnly>
           </div>
         </div>
       </div>
