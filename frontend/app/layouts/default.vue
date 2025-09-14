@@ -21,8 +21,8 @@ function goToWatchlist() {
   router.push('/watchlist');
 }
 
-function showSettingsNotImplemented() {
-  console.error('Settings not implemented');
+function goToSettings() {
+  router.push('/settings');
 }
 
 // Computed for dropdown items to ensure proper reactivity and method binding
@@ -43,7 +43,7 @@ const dropdownItems = computed(() => [
     {
       label: 'Settings',
       icon: 'i-heroicons-cog-6-tooth',
-      onSelect: showSettingsNotImplemented,
+      onSelect: goToSettings,
     },
   ],
   [

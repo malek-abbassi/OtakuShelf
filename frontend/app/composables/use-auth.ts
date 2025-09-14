@@ -70,7 +70,17 @@ export function useAuth() {
       }
 
       const data = await response.json();
-      return data;
+
+      // Transform backend snake_case to frontend camelCase
+      return {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        fullName: data.full_name,
+        isActive: data.is_active,
+        createdAt: data.created_at,
+        watchlistCount: data.watchlist_count || 0,
+      };
     }
     catch (error: any) {
       console.error('Failed to fetch user profile:', error);
@@ -267,17 +277,32 @@ export function useAuth() {
   async function updateProfile(data: { username?: string; fullName?: string }) {
     globalAuthState.isLoading.value = true;
     try {
-      const response = await $fetch(`${API_BASE_URL}/api/v1/users/me`, {
+      const requestBody = {
+        username: data.username,
+        full_name: data.fullName,
+      };
+
+      // Use native fetch to ensure proper cookie handling
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
         method: 'PUT',
-        body: {
-          username: data.username,
-          full_name: data.fullName,
+        credentials: 'include', // This is crucial for sending cookies
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        body: JSON.stringify(requestBody),
       });
 
-      if (response) {
-        // Refresh user profile
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData?.detail || 'Failed to update profile';
+        throw new Error(errorMessage);
+      }
+
+      const responseData = await response.json();
+
+      if (responseData) {
+        // Refresh user profile to get updated data
         await checkAuth();
         toast.add({
           title: 'Success',
@@ -291,7 +316,7 @@ export function useAuth() {
     }
     catch (error: any) {
       console.error('Profile update error:', error);
-      const errorMessage = error?.data?.detail || error.message || 'An error occurred';
+      const errorMessage = error?.message || 'An error occurred';
       toast.add({
         title: 'Update Failed',
         description: errorMessage,
