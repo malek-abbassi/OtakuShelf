@@ -131,19 +131,28 @@ export function useWatchlist() {
 
   // Update watchlist item
   async function updateWatchlistItem(itemId: number, updateData: WatchlistUpdateSchema) {
+    console.warn('updateWatchlistItem called:', { itemId, updateData, API_BASE_URL });
+
     try {
+      const requestBody = {
+        status: updateData.status,
+        notes: updateData.notes,
+        animeScore: updateData.animeScore,
+      };
+
+      console.warn('Making PUT request to:', `${API_BASE_URL}/api/v1/watchlist/${itemId}`);
+      console.warn('Request body:', requestBody);
+
       const response = await $fetch<WatchlistItem>(
         `${API_BASE_URL}/api/v1/watchlist/${itemId}`,
         {
           method: 'PUT',
-          body: {
-            status: updateData.status,
-            notes: updateData.notes,
-            animeScore: updateData.animeScore,
-          },
+          body: requestBody,
           credentials: 'include',
         },
       );
+
+      console.warn('PUT response received:', response);
 
       // Update local state
       const index = watchlistItems.value.findIndex(item => item.id === itemId);
@@ -168,6 +177,14 @@ export function useWatchlist() {
     }
     catch (error: any) {
       console.error('Failed to update watchlist item:', error);
+      console.error('Error details:', {
+        status: error?.status,
+        statusCode: error?.statusCode,
+        data: error?.data,
+        message: error?.message,
+        cause: error?.cause,
+      });
+
       const errorMessage = error?.data?.detail || error.message || 'Failed to update item';
       toast.add({
         title: 'Error',

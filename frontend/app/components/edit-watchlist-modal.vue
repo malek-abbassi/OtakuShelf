@@ -30,6 +30,71 @@ const form = ref({
 
 const isSubmitting = ref(false);
 
+// Status options for dropdown
+const statusOptions = computed(() => [
+  [
+    {
+      label: 'Plan to Watch',
+      icon: 'i-heroicons-clock',
+      value: 'plan_to_watch',
+      onSelect() {
+        form.value.status = 'plan_to_watch';
+      },
+    },
+    {
+      label: 'Watching',
+      icon: 'i-heroicons-play',
+      value: 'watching',
+      onSelect() {
+        form.value.status = 'watching';
+      },
+    },
+    {
+      label: 'Completed',
+      icon: 'i-heroicons-check-circle',
+      value: 'completed',
+      onSelect() {
+        form.value.status = 'completed';
+      },
+    },
+    {
+      label: 'On Hold',
+      icon: 'i-heroicons-pause',
+      value: 'on_hold',
+      onSelect() {
+        form.value.status = 'on_hold';
+      },
+    },
+    {
+      label: 'Dropped',
+      icon: 'i-heroicons-x-circle',
+      value: 'dropped',
+      onSelect() {
+        form.value.status = 'dropped';
+      },
+    },
+  ],
+]);
+
+// Get current status info for display
+const currentStatusInfo = computed(() => {
+  const statusIconMap = {
+    plan_to_watch: 'i-heroicons-clock',
+    watching: 'i-heroicons-play',
+    completed: 'i-heroicons-check-circle',
+    on_hold: 'i-heroicons-pause',
+    dropped: 'i-heroicons-x-circle',
+  };
+
+  const currentStatus = WATCH_STATUS_OPTIONS.find(option => option.value === form.value.status);
+  const status = currentStatus || WATCH_STATUS_OPTIONS[0];
+
+  return {
+    ...status,
+    icon: statusIconMap[status.value as keyof typeof statusIconMap] || 'i-heroicons-question-mark-circle',
+  };
+});
+
 // Computed
 const isOpen = computed({
   get: () => props.open,
@@ -149,16 +214,16 @@ function handleClose() {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Status
             </label>
-            <USelect
-              v-model="form.status"
-              :options="WATCH_STATUS_OPTIONS.map(option => ({
-                label: option.label,
-                value: option.value,
-              }))"
-              option-attribute="label"
-              value-attribute="value"
-              required
-            />
+            <UDropdownMenu :items="statusOptions">
+              <UButton
+                variant="outline"
+                class="w-full justify-between"
+                :icon="currentStatusInfo.icon"
+                trailing-icon="i-heroicons-chevron-down"
+              >
+                {{ currentStatusInfo.label }}
+              </UButton>
+            </UDropdownMenu>
           </div>
 
           <!-- Score -->

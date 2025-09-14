@@ -161,7 +161,7 @@ async def update_watchlist_item(
         )
 
     # Update fields
-    update_dict = update_data.model_dump(exclude_unset=True)
+    update_dict = update_data.model_dump(exclude_unset=True, by_alias=True)
     for field, value in update_dict.items():
         setattr(watchlist_item, field, value)
 

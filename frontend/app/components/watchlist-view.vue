@@ -95,12 +95,25 @@ onMounted(async () => {
 
 // Methods
 async function handleStatusChange(item: WatchlistItem, newStatus: string) {
+  console.warn('watchlist-view: handleStatusChange called:', { itemId: item.id, currentStatus: item.status, newStatus });
+
   try {
-    await updateWatchlistItem(item.id, { status: newStatus });
+    console.warn('Calling updateWatchlistItem...');
+    const result = await updateWatchlistItem(item.id, { status: newStatus });
+    console.warn('updateWatchlistItem result:', result);
+
+    console.warn('Refreshing watchlist...');
     await fetchWatchlist(); // Refresh to get updated counts
+    console.warn('Watchlist refreshed successfully');
   }
-  catch (err) {
+  catch (err: any) {
     console.error('Error updating status:', err);
+    console.error('Error details:', {
+      message: err?.message,
+      data: err?.data,
+      statusCode: err?.statusCode,
+      response: err?.response,
+    });
   }
 }
 

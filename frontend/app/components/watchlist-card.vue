@@ -41,8 +41,56 @@ const addedDate = computed(() => {
   }
 });
 
+// Status options for dropdown
+const statusOptions = computed(() => [
+  [
+    {
+      label: 'Plan to Watch',
+      icon: 'i-heroicons-clock',
+      onSelect() {
+        console.warn('watchlist-card: Plan to Watch clicked');
+        handleStatusChange('plan_to_watch');
+      },
+    },
+    {
+      label: 'Watching',
+      icon: 'i-heroicons-play',
+      onSelect() {
+        console.warn('watchlist-card: Watching clicked');
+        handleStatusChange('watching');
+      },
+    },
+    {
+      label: 'Completed',
+      icon: 'i-heroicons-check-circle',
+      onSelect() {
+        console.warn('watchlist-card: Completed clicked');
+        handleStatusChange('completed');
+      },
+    },
+    {
+      label: 'On Hold',
+      icon: 'i-heroicons-pause',
+      onSelect() {
+        console.warn('watchlist-card: On Hold clicked');
+        handleStatusChange('on_hold');
+      },
+    },
+    {
+      label: 'Dropped',
+      icon: 'i-heroicons-x-circle',
+      onSelect() {
+        console.warn('watchlist-card: Dropped clicked');
+        handleStatusChange('dropped');
+      },
+    },
+  ],
+]);
+
 // Handle status change
 function handleStatusChange(newStatus: string) {
+  console.warn('watchlist-card: handleStatusChange called with:', newStatus);
+  console.warn('watchlist-card: emitting statusChange event for item:', props.item.id);
   emit('statusChange', props.item, newStatus);
 }
 
@@ -140,37 +188,7 @@ const animePictureUrl = computed(() => {
     <!-- Actions -->
     <template v-if="showActions" #footer>
       <div class="flex items-center justify-between">
-        <UDropdownMenu
-          :items="[
-            [
-              {
-                label: 'Plan to Watch',
-                icon: 'i-heroicons-clock',
-                click: () => handleStatusChange('plan_to_watch'),
-              },
-              {
-                label: 'Watching',
-                icon: 'i-heroicons-play',
-                click: () => handleStatusChange('watching'),
-              },
-              {
-                label: 'Completed',
-                icon: 'i-heroicons-check-circle',
-                click: () => handleStatusChange('completed'),
-              },
-              {
-                label: 'On Hold',
-                icon: 'i-heroicons-pause',
-                click: () => handleStatusChange('on_hold'),
-              },
-              {
-                label: 'Dropped',
-                icon: 'i-heroicons-x-circle',
-                click: () => handleStatusChange('dropped'),
-              },
-            ],
-          ]"
-        >
+        <UDropdownMenu :items="statusOptions">
           <UButton
             variant="outline"
             size="sm"
