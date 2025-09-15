@@ -72,33 +72,9 @@ jobs:
       with:
         version: ${{ env.PNPM_VERSION }}
         
-    - name: Configure npm for native dependencies
-      run: |
-        # Clear any existing cache that might have wrong binaries
-        pnpm store prune
-        # Set npm to rebuild native dependencies for current platform
-        echo "target_platform=linux" >> ~/.npmrc
-        echo "target_arch=x64" >> ~/.npmrc
-        echo "cache_binary_host_mirror=https://github.com/oxc-project/binaries/releases/download" >> ~/.npmrc
-        
-    - name: Install dependencies with rebuild
-      run: |
-        # Install with platform-specific flags and rebuild native modules
-        pnpm install --frozen-lockfile --force
-        # Try to rebuild native dependencies if needed
-        if [ -d "node_modules" ]; then
-          pnpm rebuild || echo "Some native modules failed to rebuild, continuing..."
-        fi
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
       
-    - name: Verify installation
-      run: |
-        # Check if critical packages are properly installed
-        node -e "console.log('Node.js version:', process.version, 'Platform:', process.platform, 'Arch:', process.arch)"
-        # Test crypto.hash availability (requires Node.js 19+)
-        node -e "try { require('crypto').hash('sha256', 'test'); console.log('Crypto.hash OK'); } catch(e) { console.log('Crypto.hash issue:', e.message); }"
-        # Attempt to require problematic packages to verify they work
-        node -e "try { require('@nuxt/eslint'); console.log('ESLint module OK'); } catch(e) { console.log('ESLint module issue:', e.message); }"
-        
     - name: Run linting
       run: pnpm lint
       continue-on-error: true  # Don't fail the entire job if linting has issues
@@ -167,14 +143,6 @@ jobs:
         fi
         
         # Optional tests that provide information but don't block
-        if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
-          echo "✅ E2E tests passed"
-        elif [[ "${{ needs.e2e-tests.result }}" == "skipped" ]]; then
-          echo "⏭️  E2E tests skipped (dependency failure)"
-        else
-          echo "⚠️  E2E tests failed - non-blocking"
-        fi
-        
         if [[ "${{ needs.security-scan.result }}" == "success" ]]; then
           echo "✅ Security scan passed"
         else
