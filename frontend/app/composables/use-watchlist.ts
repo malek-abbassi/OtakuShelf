@@ -6,59 +6,82 @@ import type {
 } from '~/types/watchlist';
 
 export function useWatchlist() {
-  const watchlistItems = ref<WatchlistItem[]>([]);
-  const statusCounts = ref<Record<string, number>>({});
-  const totalCount = ref(0);
-  const isLoading = ref(false);
-  const isAddingItem = ref(false);
-
   const toast = useToast();
-
   const config = useRuntimeConfig();
   const API_BASE_URL = ((config.public?.apiBaseUrl as string) || 'http://localhost:8000')
     .replace('127.0.0.1', 'localhost'); // Ensure consistent domain for cookies
 
-  // Fetch user's watchlist
-  async function fetchWatchlist(options: {
-    statusFilter?: string;
-    skip?: number;
-    limit?: number;
-  } = {}) {
-    isLoading.value = true;
-    try {
-      const params = new URLSearchParams();
-      if (options.statusFilter)
-        params.append('status_filter', options.statusFilter);
-      if (options.skip !== undefined)
-        params.append('skip', options.skip.toString());
-      if (options.limit !== undefined)
-        params.append('limit', options.limit.toString());
+  // Reactive filters for dynamic data fetching
+  const statusFilter = ref<string | undefined>(undefined);
+  const skip = ref<number>(0);
+  const limit = ref<number>(50);
 
-      const response = await $fetch<WatchlistResponse>(
+  // Use useAsyncData for automatic caching and SSR support
+  const {
+    data: watchlistData,
+    status,
+    refresh: refreshWatchlist,
+  } = useAsyncData<WatchlistResponse>(
+    'watchlist',
+    () => {
+      const params = new URLSearchParams();
+      if (statusFilter.value)
+        params.append('status_filter', statusFilter.value);
+      if (skip.value !== undefined)
+        params.append('skip', skip.value.toString());
+      if (limit.value !== undefined)
+        params.append('limit', limit.value.toString());
+
+      return $fetch<WatchlistResponse>(
         `${API_BASE_URL}/api/v1/watchlist?${params.toString()}`,
         {
           credentials: 'include',
         },
       );
+    },
+    {
+      // Watch these refs to automatically refetch when they change
+      watch: [statusFilter, skip, limit],
+      // Don't fetch on server if user isn't authenticated
+      server: false,
+      // Lazy load to prevent blocking navigation
+      lazy: true,
+      // Transform the response to ensure consistent property names
+      transform: (data: WatchlistResponse) => ({
+        items: data.items,
+        status_counts: data.status_counts || data.statusCounts || {},
+        total_count: data.total_count || data.totalCount || 0,
+      }),
+      // Default empty state
+      default: () => ({
+        items: [],
+        status_counts: {},
+        total_count: 0,
+      }),
+    },
+  );
 
-      watchlistItems.value = response.items;
-      statusCounts.value = response.status_counts || response.statusCounts || {};
-      totalCount.value = response.total_count || response.totalCount || 0;
+  // Computed properties for easier access
+  const watchlistItems = computed(() => watchlistData.value?.items || []);
+  const statusCounts = computed(() => watchlistData.value?.status_counts || {});
+  const totalCount = computed(() => watchlistData.value?.total_count || 0);
+  const isLoading = computed(() => status.value === 'pending');
+  const isAddingItem = ref(false);
 
-      return response;
-    }
-    catch (error: any) {
-      console.error('Failed to fetch watchlist:', error);
-      toast.add({
-        title: 'Error',
-        description: 'Failed to load watchlist',
-        color: 'error',
-      });
-      throw error;
-    }
-    finally {
-      isLoading.value = false;
-    }
+  // Fetch watchlist with filters (updates reactive refs)
+  function fetchWatchlist(options: {
+    statusFilter?: string;
+    skip?: number;
+    limit?: number;
+  } = {}) {
+    statusFilter.value = options.statusFilter;
+    if (options.skip !== undefined)
+      skip.value = options.skip;
+    if (options.limit !== undefined)
+      limit.value = options.limit;
+
+    // The data will automatically refetch due to watchers
+    return refreshWatchlist();
   }
 
   // Add anime to watchlist
@@ -83,13 +106,8 @@ export function useWatchlist() {
         },
       );
 
-      // Add to local state
-      watchlistItems.value.unshift(response);
-      totalCount.value += 1;
-
-      // Update status counts
-      const status = response.status;
-      statusCounts.value[status] = (statusCounts.value[status] || 0) + 1;
+      // Refresh the watchlist to get updated data
+      await refreshWatchlist();
 
       toast.add({
         title: 'Success',
@@ -154,18 +172,8 @@ export function useWatchlist() {
 
       console.warn('PUT response received:', response);
 
-      // Update local state
-      const index = watchlistItems.value.findIndex(item => item.id === itemId);
-      if (index !== -1 && watchlistItems.value[index]) {
-        const oldStatus = watchlistItems.value[index].status;
-        watchlistItems.value[index] = response;
-
-        // Update status counts if status changed
-        if (oldStatus !== response.status) {
-          statusCounts.value[oldStatus] = Math.max(0, (statusCounts.value[oldStatus] || 0) - 1);
-          statusCounts.value[response.status] = (statusCounts.value[response.status] || 0) + 1;
-        }
-      }
+      // Refresh the watchlist to get updated data
+      await refreshWatchlist();
 
       toast.add({
         title: 'Success',
@@ -203,19 +211,8 @@ export function useWatchlist() {
         credentials: 'include',
       });
 
-      // Remove from local state
-      const index = watchlistItems.value.findIndex(item => item.id === itemId);
-      if (index !== -1) {
-        const item = watchlistItems.value[index];
-        if (item) {
-          watchlistItems.value.splice(index, 1);
-          totalCount.value -= 1;
-
-          // Update status counts
-          const status = item.status;
-          statusCounts.value[status] = Math.max(0, (statusCounts.value[status] || 0) - 1);
-        }
-      }
+      // Refresh the watchlist to get updated data
+      await refreshWatchlist();
 
       toast.add({
         title: 'Success',
@@ -266,25 +263,12 @@ export function useWatchlist() {
         credentials: 'include',
       });
 
-      // Update local state
-      const updatedItems = watchlistItems.value.filter(item => itemIds.includes(item.id));
-      const oldStatuses: Record<string, number> = {};
-
-      updatedItems.forEach((item) => {
-        const oldStatus = item.status;
-        oldStatuses[oldStatus] = (oldStatuses[oldStatus] || 0) + 1;
-        item.status = newStatus;
-      });
-
-      // Update status counts
-      Object.entries(oldStatuses).forEach(([status, count]) => {
-        statusCounts.value[status] = Math.max(0, (statusCounts.value[status] || 0) - count);
-      });
-      statusCounts.value[newStatus] = (statusCounts.value[newStatus] || 0) + itemIds.length;
+      // Refresh the watchlist to get updated data
+      await refreshWatchlist();
 
       toast.add({
         title: 'Success',
-        description: `Updated ${itemIds.length} items to ${newStatus}`,
+        description: `Updated ${itemIds.length} items`,
         color: 'success',
       });
 
@@ -312,11 +296,12 @@ export function useWatchlist() {
     return (status: string) => watchlistItems.value.filter(item => item.status === status);
   });
 
-  // Clear watchlist state
+  // Clear watchlist state (triggers refetch with empty filters)
   function clearWatchlist() {
-    watchlistItems.value = [];
-    statusCounts.value = {};
-    totalCount.value = 0;
+    statusFilter.value = undefined;
+    skip.value = 0;
+    limit.value = 50;
+    return refreshWatchlist();
   }
 
   return {

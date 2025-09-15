@@ -3,12 +3,16 @@ import type { Anime, SearchResult } from '~/composables/use-ani-list';
 import type { WatchlistAddSchema } from '~/types/watchlist';
 
 import { useAniList } from '~/composables/use-ani-list';
+import { useAuth } from '~/composables/use-auth';
 import { useWatchlist } from '~/composables/use-watchlist';
 import { WATCH_STATUS_OPTIONS } from '~/types/watchlist';
 
 type Props = {
   initialQuery?: string;
   showWatchlistActions?: boolean;
+  debounceMs?: number;
+  showFilters?: boolean;
+  variant?: 'default' | 'compact';
 };
 
 type Emits = {
@@ -19,6 +23,9 @@ type Emits = {
 const props = withDefaults(defineProps<Props>(), {
   initialQuery: '',
   showWatchlistActions: true,
+  debounceMs: 300,
+  showFilters: false,
+  variant: 'default',
 });
 
 const emit = defineEmits<Emits>();
@@ -39,6 +46,29 @@ const searched = ref(false);
 // Watchlist state for each anime
 const watchlistItems = ref<Map<number, any>>(new Map());
 const addingToWatchlist = ref<Set<number>>(new Set());
+
+// Debounce timer
+let debounceTimer: NodeJS.Timeout | null = null;
+
+// Debounced search function
+function debouncedSearch(query: string) {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+
+  debounceTimer = setTimeout(() => {
+    if (query.trim()) {
+      performSearch(1);
+    }
+  }, props.debounceMs);
+}
+
+// Watch for search query changes for auto-search
+watch(searchQuery, (newQuery) => {
+  if (newQuery.trim()) {
+    debouncedSearch(newQuery);
+  }
+});
 
 // Search functionality
 async function performSearch(page = 1) {
@@ -307,6 +337,7 @@ onMounted(() => {
                   :loading="isAdding(anime.id)"
                   :disabled="isAdding(anime.id)"
                   block
+                  @click.stop
                 >
                   <template v-if="isAdding(anime.id)">
                     Adding...

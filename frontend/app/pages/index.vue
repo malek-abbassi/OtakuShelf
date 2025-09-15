@@ -2,12 +2,55 @@
 // Composables
 const { isLoggedIn, userProfile } = useAuth();
 
-// Meta
+// Enhanced SEO Meta
 useSeoMeta({
   title: 'OtakuShelf - Your Personal Anime & Manga Collection Manager',
   ogTitle: 'OtakuShelf - Your Personal Anime & Manga Collection Manager',
-  description: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized.',
-  ogDescription: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized.',
+  description: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized with smart watchlists, detailed stats, and seamless anime discovery.',
+  ogDescription: 'Organize, track, and discover your favorite anime series and manga volumes with ease. Keep your otaku journey organized with smart watchlists, detailed stats, and seamless anime discovery.',
+  ogImage: '/favicon.ico',
+  ogImageAlt: 'OtakuShelf - Anime Collection Manager',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'OtakuShelf - Your Personal Anime & Manga Collection Manager',
+  twitterDescription: 'Organize, track, and discover your favorite anime series and manga volumes with ease.',
+  keywords: 'anime, manga, watchlist, collection, tracker, otaku, anilist, anime database, anime manager',
+  robots: 'index, follow',
+});
+
+// Add canonical link
+useHead({
+  link: [
+    { rel: 'canonical', href: 'https://otakushelf.com' },
+  ],
+});
+
+// Structured Data for SEO
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        'name': 'OtakuShelf',
+        'description': 'Personal anime and manga collection manager with smart watchlists and discovery features',
+        'url': 'https://otakushelf.com',
+        'applicationCategory': 'Entertainment',
+        'operatingSystem': 'Web',
+        'offers': {
+          '@type': 'Offer',
+          'price': '0',
+          'priceCurrency': 'USD',
+        },
+        'featureList': [
+          'Smart Watchlist Management',
+          'Anime Discovery',
+          'Personal Profile & Stats',
+          'Progress Tracking',
+        ],
+      }),
+    },
+  ],
 });
 </script>
 

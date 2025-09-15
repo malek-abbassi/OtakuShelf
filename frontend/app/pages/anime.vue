@@ -10,12 +10,45 @@ definePageMeta({
   description: 'Search and discover anime titles with detailed information from AniList',
 });
 
-// SEO
+// Enhanced SEO
 useSeoMeta({
-  title: 'Discover Anime - OtakuShelf',
-  ogTitle: 'Discover Anime - OtakuShelf',
-  description: 'Search through thousands of anime titles and get detailed information including ratings, air dates, and more.',
-  ogDescription: 'Search through thousands of anime titles and get detailed information including ratings, air dates, and more.',
+  title: 'Discover Anime - OtakuShelf | Browse Thousands of Anime Titles',
+  ogTitle: 'Discover Anime - OtakuShelf | Browse Thousands of Anime Titles',
+  description: 'Search through thousands of anime titles with detailed information including ratings, air dates, genres, and more. Discover your next favorite anime with comprehensive search and filtering.',
+  ogDescription: 'Search through thousands of anime titles with detailed information including ratings, air dates, genres, and more. Discover your next favorite anime with comprehensive search and filtering.',
+  ogImage: '/favicon.ico',
+  ogImageAlt: 'OtakuShelf Anime Discovery',
+  twitterCard: 'summary_large_image',
+  keywords: 'anime search, discover anime, anime database, anime titles, anime ratings, anilist search, anime genres',
+  robots: 'index, follow',
+});
+
+// Add canonical link
+useHead({
+  link: [
+    { rel: 'canonical', href: 'https://otakushelf.com/anime' },
+  ],
+});
+
+// Structured Data for Anime Discovery Page
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        'name': 'Discover Anime - OtakuShelf',
+        'description': 'Search and discover anime titles with detailed information from AniList',
+        'url': 'https://otakushelf.com/anime',
+        'mainEntity': {
+          '@type': 'SearchAction',
+          'target': 'https://otakushelf.com/anime?q={search_term_string}',
+          'query-input': 'required name=search_term_string',
+        },
+      }),
+    },
+  ],
 });
 
 const route = useRoute();

@@ -25,7 +25,7 @@ const viewMode = ref<'grid' | 'list'>('grid');
 const editingItem = ref<WatchlistItem | null>(null);
 const showEditModal = ref(false);
 
-// Computed properties
+// Computed properties with performance optimizations
 const statusOptions = computed(() => [
   { value: 'all', label: 'All', count: totalCount.value || 0 },
   ...WATCH_STATUS_OPTIONS.map(option => ({
