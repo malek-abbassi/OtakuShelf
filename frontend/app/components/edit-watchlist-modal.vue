@@ -37,7 +37,7 @@ const statusOptions = computed(() => [
       label: 'Plan to Watch',
       icon: 'i-heroicons-clock',
       value: 'plan_to_watch',
-      onSelect() {
+      onClick() {
         form.value.status = 'plan_to_watch';
       },
     },
@@ -45,7 +45,7 @@ const statusOptions = computed(() => [
       label: 'Watching',
       icon: 'i-heroicons-play',
       value: 'watching',
-      onSelect() {
+      onClick() {
         form.value.status = 'watching';
       },
     },
@@ -53,7 +53,7 @@ const statusOptions = computed(() => [
       label: 'Completed',
       icon: 'i-heroicons-check-circle',
       value: 'completed',
-      onSelect() {
+      onClick() {
         form.value.status = 'completed';
       },
     },
@@ -61,7 +61,7 @@ const statusOptions = computed(() => [
       label: 'On Hold',
       icon: 'i-heroicons-pause',
       value: 'on_hold',
-      onSelect() {
+      onClick() {
         form.value.status = 'on_hold';
       },
     },
@@ -69,7 +69,7 @@ const statusOptions = computed(() => [
       label: 'Dropped',
       icon: 'i-heroicons-x-circle',
       value: 'dropped',
-      onSelect() {
+      onClick() {
         form.value.status = 'dropped';
       },
     },
@@ -126,7 +126,7 @@ const createdAt = computed(() => {
   return props.item?.createdAt || (props.item as any)?.created_at;
 });
 
-const addedDate = computed(() => {
+const _addedDate = computed(() => {
   const date = createdAt.value;
   if (!date)
     return 'Unknown';
@@ -198,11 +198,11 @@ function handleClose() {
             loading="lazy"
           />
           <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-gray-900 dark:text-white truncate">
-              {{ animeTitle }}
+            <h3 class="font-semibold text-neutral-900 dark:text-white truncate">
+              {{ item?.anime_title || item?.animeTitle }}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Added {{ addedDate }}
+            <p class="text-sm text-neutral-600 dark:text-neutral-300 mt-1">
+              Score: {{ item?.anime_score || item?.animeScore || 'Not rated' }}
             </p>
           </div>
         </div>
@@ -211,7 +211,7 @@ function handleClose() {
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <!-- Status -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Status
             </label>
             <UDropdownMenu :items="statusOptions">
@@ -228,7 +228,7 @@ function handleClose() {
 
           <!-- Score -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Your Rating (1-10)
             </label>
             <UInput
@@ -243,7 +243,7 @@ function handleClose() {
 
           <!-- Notes -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Notes
             </label>
             <UTextarea

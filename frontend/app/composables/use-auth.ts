@@ -14,14 +14,17 @@ const globalAuthState = {
 
 export function useAuth() {
   const toast = useToast();
-
   const config = useRuntimeConfig();
+
   const API_BASE_URL = ((config.public?.apiBaseUrl as string) || 'http://localhost:8000')
     .replace('127.0.0.1', 'localhost'); // Ensure consistent domain for cookies
 
-  // Initialize SuperTokens if not already done
-  function initSuperTokensIfNeeded() {
-    if (!globalAuthState.isInitialized.value) {
+  // Initialize SuperTokens
+  async function initSuperTokensIfNeeded() {
+    if (globalAuthState.isInitialized.value)
+      return;
+
+    try {
       SuperTokens.init({
         appInfo: {
           appName: 'OtakuShelf',
@@ -35,79 +38,99 @@ export function useAuth() {
       });
       globalAuthState.isInitialized.value = true;
     }
+    catch (error) {
+      console.error('SuperTokens initialization failed:', error);
+    }
   }
 
-  // Fetch user profile from our backend
+  // Fetch user profile from API
   async function fetchUserProfile(): Promise<UserProfile | null> {
     try {
-      initSuperTokensIfNeeded();
-
-      // First check if we have a valid session
-      if (!(await Session.doesSessionExist())) {
-        console.warn('No session exists');
+      // First verify we have a session
+      const sessionExists = await Session.doesSessionExist();
+      if (!sessionExists) {
+        console.warn('No SuperTokens session exists when trying to fetch profile');
+        globalAuthState.isLoggedIn.value = false;
+        globalAuthState.userProfile.value = null;
         return null;
       }
 
-      // Use native fetch with credentials to ensure cookies are sent
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
-        method: 'GET',
-        credentials: 'include', // This is crucial for sending cookies
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await $fetch<any>('/api/v1/users/me', {
+        baseURL: API_BASE_URL,
+        credentials: 'include',
+        // Add retry logic to the request
+        retry: 2,
+        retryDelay: 500,
       });
 
-      if (!response.ok) {
-        console.error('Failed to fetch user profile:', response.status, response.statusText);
-
-        // If we get 401, the session might be expired
-        if (response.status === 401) {
-          console.warn('Session appears to be invalid, clearing local session');
-          await Session.signOut();
-        }
-        return null;
+      if (response) {
+        const profile: UserProfile = {
+          id: response.id,
+          username: response.username,
+          email: response.email,
+          fullName: response.full_name || response.fullName,
+          isActive: response.is_active ?? response.isActive,
+          createdAt: response.created_at || response.createdAt,
+          watchlistCount: response.watchlist_count || response.watchlistCount || 0,
+        };
+        globalAuthState.userProfile.value = profile;
+        globalAuthState.isLoggedIn.value = true;
+        return profile;
       }
-
-      const data = await response.json();
-
-      // Transform backend snake_case to frontend camelCase
-      return {
-        id: data.id,
-        username: data.username,
-        email: data.email,
-        fullName: data.full_name,
-        isActive: data.is_active,
-        createdAt: data.created_at,
-        watchlistCount: data.watchlist_count || 0,
-      };
     }
     catch (error: any) {
       console.error('Failed to fetch user profile:', error);
+      if (error?.status === 401) {
+        console.warn('Profile fetch returned 401, clearing session state');
+        globalAuthState.isLoggedIn.value = false;
+        globalAuthState.userProfile.value = null;
 
-      // If we get 401, the session might be expired
-      if (error.status === 401 || error.statusCode === 401) {
-        console.warn('Session appears to be invalid, clearing local session');
-        await Session.signOut();
+        // Try to refresh the session if it exists in SuperTokens
+        try {
+          const sessionExists = await Session.doesSessionExist();
+          if (sessionExists) {
+            await Session.attemptRefreshingSession();
+            // If refresh succeeds, try fetching profile again (but avoid infinite recursion)
+            const refreshedResponse = await $fetch<any>('/api/v1/users/me', {
+              baseURL: API_BASE_URL,
+              credentials: 'include',
+            });
+            if (refreshedResponse) {
+              const profile: UserProfile = {
+                id: refreshedResponse.id,
+                username: refreshedResponse.username,
+                email: refreshedResponse.email,
+                fullName: refreshedResponse.full_name || refreshedResponse.fullName,
+                isActive: refreshedResponse.is_active ?? refreshedResponse.isActive,
+                createdAt: refreshedResponse.created_at || refreshedResponse.createdAt,
+                watchlistCount: refreshedResponse.watchlist_count || refreshedResponse.watchlistCount || 0,
+              };
+              globalAuthState.userProfile.value = profile;
+              globalAuthState.isLoggedIn.value = true;
+              return profile;
+            }
+          }
+        }
+        catch (refreshError) {
+          console.error('Session refresh failed:', refreshError);
+        }
       }
-      return null;
     }
+    return null;
   }
 
   // Check authentication status
   async function checkAuth() {
+    if (!import.meta.client)
+      return;
+
     try {
-      initSuperTokensIfNeeded();
-      if (await Session.doesSessionExist()) {
-        const profile = await fetchUserProfile();
-        if (profile) {
-          globalAuthState.isLoggedIn.value = true;
-          globalAuthState.userProfile.value = profile;
-        }
-        else {
-          globalAuthState.isLoggedIn.value = false;
-          globalAuthState.userProfile.value = null;
-        }
+      globalAuthState.isLoading.value = true;
+      await initSuperTokensIfNeeded();
+
+      const sessionExists = await Session.doesSessionExist();
+      if (sessionExists) {
+        await fetchUserProfile();
       }
       else {
         globalAuthState.isLoggedIn.value = false;
@@ -119,35 +142,42 @@ export function useAuth() {
       globalAuthState.isLoggedIn.value = false;
       globalAuthState.userProfile.value = null;
     }
+    finally {
+      globalAuthState.isLoading.value = false;
+    }
   }
 
-  // Sign up function using our backend API
+  // Sign up function using SuperTokens
   async function signUp(data: SignUpSchema) {
     globalAuthState.isLoading.value = true;
     try {
-      // First register with our backend
-      const response = await $fetch(`${API_BASE_URL}/api/v1/users/signup`, {
-        method: 'POST',
-        body: {
-          email: data.email,
-          password: data.password,
-          username: data.username,
-          full_name: data.fullName,
-        },
+      await initSuperTokensIfNeeded();
+
+      const response = await EmailPassword.signUp({
+        formFields: [
+          { id: 'email', value: data.email },
+          { id: 'password', value: data.password },
+        ],
       });
 
-      if (response) {
-        // After successful backend registration, sign in with SuperTokens
-        initSuperTokensIfNeeded();
-        const authResponse = await EmailPassword.signIn({
-          formFields: [
-            { id: 'email', value: data.email },
-            { id: 'password', value: data.password },
-          ],
-        });
+      if (response.status === 'OK') {
+        // Create user profile in our database
+        try {
+          await $fetch('/api/v1/users/signup', {
+            baseURL: API_BASE_URL,
+            method: 'POST',
+            body: {
+              email: data.email,
+              password: data.password, // This will be ignored by backend since user already exists in SuperTokens
+              username: data.username,
+              full_name: data.fullName,
+            },
+            credentials: 'include',
+          });
 
-        if (authResponse.status === 'OK') {
-          await checkAuth();
+          // Fetch the updated profile
+          await fetchUserProfile();
+
           toast.add({
             title: 'Success',
             description: 'Account created successfully! You are now signed in.',
@@ -155,14 +185,32 @@ export function useAuth() {
           });
           return { success: true };
         }
+        catch (profileError: any) {
+          console.error('Profile creation error:', profileError);
+          const errorMessage = profileError?.data?.detail || 'Failed to create user profile';
+          toast.add({
+            title: 'Profile Creation Failed',
+            description: errorMessage,
+            color: 'error',
+          });
+          return { success: false, message: errorMessage };
+        }
       }
+      else if (response.status === 'FIELD_ERROR') {
+        const emailError = response.formFields.find(field => field.id === 'email')?.error;
+        const passwordError = response.formFields.find(field => field.id === 'password')?.error;
+        const errorMessage = emailError || passwordError || 'Sign up failed';
 
-      toast.add({
-        title: 'Sign Up Failed',
-        description: 'Failed to complete sign up process',
-        color: 'error',
-      });
-      return { success: false, message: 'Failed to complete sign up process' };
+        toast.add({
+          title: 'Sign Up Failed',
+          description: errorMessage,
+          color: 'error',
+        });
+        return { success: false, message: errorMessage };
+      }
+      else {
+        throw new Error('Unexpected response status');
+      }
     }
     catch (error: any) {
       console.error('Sign up error:', error);
@@ -179,50 +227,109 @@ export function useAuth() {
     }
   }
 
-  // Sign in function using our backend API
+  // Sign in function using SuperTokens
   async function signIn(data: SignInSchema) {
     globalAuthState.isLoading.value = true;
     try {
-      // First sign in with our backend to validate credentials
-      const response = await $fetch(`${API_BASE_URL}/api/v1/users/signin`, {
-        method: 'POST',
-        body: {
-          email: data.email,
-          password: data.password,
-        },
+      await initSuperTokensIfNeeded();
+
+      const response = await EmailPassword.signIn({
+        formFields: [
+          { id: 'email', value: data.email },
+          { id: 'password', value: data.password },
+        ],
       });
 
-      if (response) {
-        // After successful backend validation, sign in with SuperTokens
-        initSuperTokensIfNeeded();
-        const authResponse = await EmailPassword.signIn({
-          formFields: [
-            { id: 'email', value: data.email },
-            { id: 'password', value: data.password },
-          ],
-        });
+      if (response.status === 'OK') {
+        // Give SuperTokens a moment to set up the session
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        if (authResponse.status === 'OK') {
-          await checkAuth();
-          toast.add({
-            title: 'Success',
-            description: 'Welcome back! You are now signed in.',
-            color: 'success',
-          });
-          return { success: true };
+        // Verify session was created successfully
+        const sessionExists = await Session.doesSessionExist();
+        if (!sessionExists) {
+          throw new Error('Session was not created after successful sign-in');
         }
-      }
 
-      toast.add({
-        title: 'Sign In Failed',
-        description: 'Invalid email or password',
-        color: 'error',
-      });
-      return { success: false, message: 'Invalid credentials' };
+        // Update user profile in our database if needed
+        try {
+          await $fetch('/api/v1/users/signin', {
+            baseURL: API_BASE_URL,
+            method: 'POST',
+            body: {
+              email: data.email,
+              password: data.password,
+            },
+            credentials: 'include',
+          });
+        }
+        catch (signinError) {
+          // This might fail if the endpoint doesn't exist, but the SuperTokens auth still succeeded
+          console.warn('Backend signin call failed, but SuperTokens auth succeeded:', signinError);
+        }
+
+        // Fetch the user profile with retry logic
+        let retries = 3;
+        let profileFetched = false;
+
+        while (retries > 0 && !profileFetched) {
+          try {
+            await fetchUserProfile();
+            profileFetched = globalAuthState.userProfile.value !== null;
+            if (!profileFetched) {
+              retries--;
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+              }
+            }
+          }
+          catch (error) {
+            console.warn('Profile fetch attempt failed:', error);
+            retries--;
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          }
+        }
+
+        if (!profileFetched) {
+          throw new Error('Failed to fetch user profile after sign-in');
+        }
+
+        toast.add({
+          title: 'Success',
+          description: 'Welcome back! You are now signed in.',
+          color: 'success',
+        });
+        return { success: true };
+      }
+      else if (response.status === 'FIELD_ERROR') {
+        const emailError = response.formFields.find(field => field.id === 'email')?.error;
+        const passwordError = response.formFields.find(field => field.id === 'password')?.error;
+        const errorMessage = emailError || passwordError || 'Invalid email or password';
+
+        toast.add({
+          title: 'Sign In Failed',
+          description: errorMessage,
+          color: 'error',
+        });
+        return { success: false, message: errorMessage };
+      }
+      else if (response.status === 'WRONG_CREDENTIALS_ERROR') {
+        const errorMessage = 'Invalid email or password';
+        toast.add({
+          title: 'Sign In Failed',
+          description: errorMessage,
+          color: 'error',
+        });
+        return { success: false, message: errorMessage };
+      }
+      else {
+        throw new Error('Unexpected response status');
+      }
     }
     catch (error: any) {
       console.error('Sign in error:', error);
-      const errorMessage = error?.data?.detail || error.message || 'An error occurred during sign in';
+      const errorMessage = error?.data?.detail || error.message || 'Invalid email or password';
       toast.add({
         title: 'Sign In Failed',
         description: errorMessage,
@@ -235,11 +342,30 @@ export function useAuth() {
     }
   }
 
-  // Sign out function
+  // Sign out function using SuperTokens
   async function signOut() {
     try {
-      initSuperTokensIfNeeded();
+      await initSuperTokensIfNeeded();
       await Session.signOut();
+
+      // Try to notify backend about signout
+      try {
+        await $fetch('/api/v1/users/signout', {
+          baseURL: API_BASE_URL,
+          method: 'POST',
+          credentials: 'include',
+        });
+      }
+      catch (error) {
+        console.error('Sign out API error:', error);
+        // Continue with local cleanup even if API call fails
+      }
+    }
+    catch (error) {
+      console.error('SuperTokens sign out error:', error);
+    }
+    finally {
+      // Clear local state
       globalAuthState.isLoggedIn.value = false;
       globalAuthState.userProfile.value = null;
       toast.add({
@@ -248,23 +374,17 @@ export function useAuth() {
         color: 'info',
       });
     }
-    catch (error) {
-      console.error('Sign out error:', error);
-      // Even if there's an error, clear the local state
-      globalAuthState.isLoggedIn.value = false;
-      globalAuthState.userProfile.value = null;
-      toast.add({
-        title: 'Signed Out',
-        description: 'You have been signed out.',
-        color: 'info',
-      });
-    }
   }
 
   // Check username availability
   async function checkUsernameAvailability(username: string) {
     try {
-      const response = await $fetch(`${API_BASE_URL}/api/v1/users/check-username/${username}`);
+      const response = await $fetch<{ username: string; available: boolean; message?: string }>(
+        `/api/v1/users/check-username/${username}`,
+        {
+          baseURL: API_BASE_URL,
+        },
+      );
       return response;
     }
     catch (error) {
@@ -277,33 +397,21 @@ export function useAuth() {
   async function updateProfile(data: { username?: string; fullName?: string }) {
     globalAuthState.isLoading.value = true;
     try {
-      const requestBody = {
-        username: data.username,
-        full_name: data.fullName,
-      };
+      await initSuperTokensIfNeeded();
 
-      // Use native fetch to ensure proper cookie handling
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+      const response = await $fetch<UserProfile>('/api/v1/users/me', {
+        baseURL: API_BASE_URL,
         method: 'PUT',
-        credentials: 'include', // This is crucial for sending cookies
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
+        body: {
+          username: data.username,
+          full_name: data.fullName,
         },
-        body: JSON.stringify(requestBody),
+        credentials: 'include',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData?.detail || 'Failed to update profile';
-        throw new Error(errorMessage);
-      }
-
-      const responseData = await response.json();
-
-      if (responseData) {
-        // Refresh user profile to get updated data
-        await checkAuth();
+      if (response) {
+        // Refresh profile to get updated data
+        await fetchUserProfile();
         toast.add({
           title: 'Success',
           description: 'Profile updated successfully',
@@ -316,7 +424,7 @@ export function useAuth() {
     }
     catch (error: any) {
       console.error('Profile update error:', error);
-      const errorMessage = error?.message || 'An error occurred';
+      const errorMessage = error?.data?.detail || error.message || 'An error occurred';
       toast.add({
         title: 'Update Failed',
         description: errorMessage,
@@ -329,8 +437,8 @@ export function useAuth() {
     }
   }
 
-  // Initialize auth on composable creation - but only on client side
-  if (import.meta.client) {
+  // Auto-initialize on client-side
+  if (import.meta.client && !globalAuthState.isInitialized.value) {
     nextTick(() => {
       checkAuth();
     });
