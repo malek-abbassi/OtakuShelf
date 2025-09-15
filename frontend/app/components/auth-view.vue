@@ -11,9 +11,11 @@ const { isLoggedIn, userProfile, isLoading, signUp, signIn, signOut } = useAuth(
 async function handleSubmit(data: SignInSchema | SignUpSchema) {
   if (isSignUp.value) {
     await signUp(data as SignUpSchema);
+    await navigateTo('/anime');
   }
   else {
     await signIn(data as SignInSchema);
+    await navigateTo('/watchlist');
   }
 }
 
@@ -23,8 +25,9 @@ function toggleMode() {
 }
 
 // Handle sign out
-function handleSignOut() {
-  signOut();
+async function handleSignOut() {
+  await signOut();
+  await navigateTo('/');
 }
 </script>
 
