@@ -1,27 +1,31 @@
 [project]
 name = "otaku-shelf-backend"
 version = "0.0.1"
-requires-python = "~=3.12.0"
+requires-python = "==3.12.*" # Match Vercel's Python version
 dependencies = [
-    "fastapi[standard]",
+    "fastapi",
     "supertokens-python",
     "sqlmodel",
     "pydantic-settings",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary",
 ]
 
 [dependency-groups]
-dev = ["ruff"]
+dev = ["ruff", "fastapi[standard]"]
 test = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "pytest-cov>=4.0.0",
-    "httpx>=0.27.0",
-    "faker>=24.0.0",
-    "factory-boy>=3.3.0",
-    "pytest-mock>=3.12.0",
-    "pytest-xdist>=3.5.0"
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "httpx",
+    "faker",
+    "factory-boy",
+    "pytest-mock",
+    "pytest-xdist",
 ]
+
+[build-system]
+requires = ["uv"]
+build-backend = "uv"
 
 [tool.uv]
 package = false
