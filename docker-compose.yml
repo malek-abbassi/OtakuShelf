@@ -71,6 +71,11 @@ services:
     restart: unless-stopped
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "username", "-d", "otaku_shelf"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -87,7 +92,7 @@ services:
       - NUXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:3000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000", "||", "exit", "1"]
+      test: ["CMD", "/app/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -187,8 +187,10 @@ onMounted(() => {
   <div class="space-y-6">
     <!-- Search Input -->
     <div class="flex gap-4">
-      <UInput v-model="searchQuery" placeholder="Search for anime..." size="lg" class="flex-1" :loading="pending"
-        @keyup.enter="handleSearchClick">
+      <UInput
+        v-model="searchQuery" placeholder="Search for anime..." size="lg" class="flex-1" :loading="pending"
+        @keyup.enter="handleSearchClick"
+      >
         <template #leading>
           <UIcon name="i-heroicons-magnifying-glass" />
         </template>
@@ -222,8 +224,10 @@ onMounted(() => {
           <span class="flex items-center px-3 text-sm">
             Page {{ currentPage }} of {{ searchResults.pageInfo.lastPage }}
           </span>
-          <UButton variant="outline" size="sm" :disabled="!searchResults.pageInfo.hasNextPage"
-            @click="changePage(currentPage + 1)">
+          <UButton
+            variant="outline" size="sm" :disabled="!searchResults.pageInfo.hasNextPage"
+            @click="changePage(currentPage + 1)"
+          >
             Next
           </UButton>
         </div>
@@ -231,10 +235,12 @@ onMounted(() => {
 
       <!-- Anime Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <AnimeCard v-for="anime in searchResults.media" :key="anime.id" :anime="anime"
+        <AnimeCard
+          v-for="anime in searchResults.media" :key="anime.id" :anime="anime"
           :is-in-watchlist="isInWatchlist(anime.id)" :is-loading="isAdding(anime.id)"
           :show-watchlist-button="showWatchlistActions && isLoggedIn" @click="selectAnime"
-          @add-to-watchlist="handleAddToWatchlistDropdown" />
+          @add-to-watchlist="handleAddToWatchlistDropdown"
+        />
       </div>
     </div>
 

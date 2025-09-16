@@ -56,6 +56,11 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Create a health check script
+RUN echo '#!/bin/sh' > /app/healthcheck.sh && \
+    echo 'echo "Running health check..."' >> /app/healthcheck.sh && \
+    echo 'curl -f --max-time 10 http://localhost:3000/ || exit 1' >> /app/healthcheck.sh && \
+    chmod +x /app/healthcheck.sh
 
 # Start the application
 CMD ["pnpm", "run", "preview"]

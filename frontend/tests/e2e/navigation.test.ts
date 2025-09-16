@@ -19,8 +19,29 @@ test.describe('Navigation', () => {
     await expect(page.locator('h1, h2').filter({ hasText: /about/i }).first()).toBeVisible();
   });
 
+  test('should navigate to privacy page', async ({ page, goto }) => {
+    await goto('/privacy');
+    await expect(page.locator('h1, h2').filter({ hasText: /privacy/i }).first()).toBeVisible();
+  });
+
+  test('should navigate to terms page', async ({ page, goto }) => {
+    await goto('/terms');
+    await expect(page.locator('h1, h2').filter({ hasText: /terms/i }).first()).toBeVisible();
+  });
+
+  test('should navigate to settings page', async ({ page, goto }) => {
+    await goto('/settings');
+    await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
+  });
+
   test('should navigate to anime page', async ({ page, goto }) => {
     await goto('/anime');
     await expect(page).toHaveURL(/.*anime/);
+  });
+
+  test('should have working header navigation', async ({ page, goto }) => {
+    await goto('/');
+    // Check that header navigation links are present
+    await expect(page.locator('a[href="/"], a[href="/anime"]').first()).toBeVisible();
   });
 });

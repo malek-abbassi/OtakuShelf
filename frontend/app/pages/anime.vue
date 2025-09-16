@@ -100,15 +100,19 @@ watch(() => route.query.q, (newQuery) => {
       </div>
 
       <!-- Search Component -->
-      <AnimeSearchEnhanced :initial-query="(route.query.q as string) || ''" @select-anime="handleAnimeSelect"
-        @added-to-watchlist="handleWatchlistAdd" />
+      <AnimeSearchEnhanced
+        :initial-query="(route.query.q as string) || ''" @select-anime="handleAnimeSelect"
+        @added-to-watchlist="handleWatchlistAdd"
+      />
 
       <!-- Anime Details Modal - Official UModal Implementation -->
-      <UModal v-model:open="isModalOpen" :title="selectedAnime ? getAnimeTitle(selectedAnime.title) : 'Anime Details'"
+      <UModal
+        v-model:open="isModalOpen" :title="selectedAnime ? getAnimeTitle(selectedAnime.title) : 'Anime Details'"
         :dismissible="!isLoading" :ui="{
           content: 'max-w-4xl w-full max-h-[90vh]',
           body: 'p-0',
-        }">
+        }"
+      >
         <template #body="{ close }">
           <!-- Loading State -->
           <div v-if="isLoading" class="p-6">
@@ -122,8 +126,10 @@ watch(() => route.query.q, (newQuery) => {
 
           <!-- Error State -->
           <div v-else class="p-6">
-            <UAlert color="error" variant="soft" title="Failed to load anime details"
-              description="We couldn't load the detailed information for this anime. This might be a temporary issue.">
+            <UAlert
+              color="error" variant="soft" title="Failed to load anime details"
+              description="We couldn't load the detailed information for this anime. This might be a temporary issue."
+            >
               <template #actions>
                 <UButton color="primary" @click="retryLoadDetails">
                   Try Again
