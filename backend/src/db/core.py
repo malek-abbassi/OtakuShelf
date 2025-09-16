@@ -3,12 +3,15 @@ Database configuration and session management.
 Handles SQLModel engine creation and session lifecycle.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlmodel import SQLModel, create_engine, Session
 
 from ..config import get_settings
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -31,7 +34,9 @@ engine = create_engine(
 
 def create_db_and_tables():
     """Create database tables based on SQLModel metadata."""
+    logger.info("Creating database tables...")
     SQLModel.metadata.create_all(engine)
+    logger.info("Database tables created successfully")
 
 
 def get_session() -> Session:

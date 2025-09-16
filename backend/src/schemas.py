@@ -4,9 +4,19 @@ Separate from database models for clean API contracts.
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+class WatchStatus(str, Enum):
+    """Enum for watchlist item status."""
+    PLAN_TO_WATCH = "plan_to_watch"
+    WATCHING = "watching"
+    COMPLETED = "completed"
+    ON_HOLD = "on_hold"
+    DROPPED = "dropped"
 
 
 class ErrorResponse(BaseModel):
@@ -53,13 +63,13 @@ class UserLoginRequest(BaseModel):
 class UserSignupRequest(BaseModel):
     """User signup request schema."""
 
-    email: str = Field(..., description="User email address")
-    password: str = Field(..., min_length=8, description="User password")
+    email: str = Field(..., description="User email address", examples=["user@example.com"])
+    password: str = Field(..., min_length=8, description="User password", examples=["securepassword123"])
     username: str = Field(
-        ..., min_length=3, max_length=50, description="Unique username"
+        ..., min_length=3, max_length=50, description="Unique username", examples=["animefan123"]
     )
     full_name: Optional[str] = Field(
-        default=None, max_length=100, description="User's full name"
+        default=None, max_length=100, description="User's full name", examples=["John Doe"]
     )
 
 
@@ -90,26 +100,32 @@ class AnimeSearchResult(BaseModel):
 class WatchlistAddRequest(BaseModel):
     """Request to add anime to watchlist."""
 
-    animeId: int = Field(..., alias="anime_id", description="AniList anime ID")
-    animeTitle: str = Field(..., alias="anime_title", max_length=200, description="Anime title")
+    animeId: int = Field(..., alias="anime_id", description="AniList anime ID", examples=[12345])
+    animeTitle: str = Field(..., alias="anime_title", max_length=200, description="Anime title", examples=["Attack on Titan"])
     animePictureUrl: Optional[str] = Field(
-        default=None, alias="anime_picture_url", description="Anime cover image URL"
+        default=None, alias="anime_picture_url", description="Anime cover image URL", examples=["https://example.com/image.jpg"]
     )
     animeScore: Optional[float] = Field(
-        default=None, alias="anime_score", ge=0.0, le=10.0, description="Anime score"
+        default=None, alias="anime_score", ge=0.0, le=10.0, description="Anime score", examples=[8.5]
     )
-    status: str = Field(default="plan_to_watch", description="Watch status")
+    status: WatchStatus = Field(default=WatchStatus.PLAN_TO_WATCH, description="Watch status")
     notes: Optional[str] = Field(
-        default=None, max_length=1000, description="User notes"
+        default=None, max_length=1000, description="User notes", examples=["Looking forward to watching this!"]
     )
 
     model_config = {"populate_by_name": True}
+
+    @model_validator(mode="after")
+    def validate_anime_title(self):
+        if self.animeTitle.strip() == "":
+            raise ValueError("Anime title cannot be empty")
+        return self
 
 
 class WatchlistUpdateRequest(BaseModel):
     """Request to update watchlist item."""
 
-    status: Optional[str] = Field(default=None, description="Watch status")
+    status: Optional[WatchStatus] = Field(default=None, description="Watch status")
     notes: Optional[str] = Field(
         default=None, max_length=1000, description="User notes"
     )
@@ -128,7 +144,7 @@ class WatchlistItemResponse(BaseModel):
     animeTitle: str = Field(alias="anime_title") 
     animePictureUrl: Optional[str] = Field(alias="anime_picture_url")
     animeScore: Optional[float] = Field(alias="anime_score")
-    status: str
+    status: WatchStatus
     notes: Optional[str]
     createdAt: datetime = Field(alias="created_at")
     updatedAt: datetime = Field(alias="updated_at")

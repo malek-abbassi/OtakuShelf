@@ -58,10 +58,11 @@ class Settings(BaseSettings):
         default="info", description="Logging level"
     )
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+    }
 
 
 @lru_cache()

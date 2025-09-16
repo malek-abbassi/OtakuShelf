@@ -4,6 +4,7 @@ Handles user creation and management.
 """
 
 from typing import Optional
+import logging
 
 from sqlmodel import Session, select
 from supertokens_python.recipe.emailpassword.asyncio import sign_up, sign_in
@@ -14,6 +15,9 @@ from supertokens_python.recipe.emailpassword.interfaces import (
 
 from ..models import User, UserCreate
 from ..db.core import get_session
+
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -53,6 +57,7 @@ class AuthService:
         self.db.commit()
         self.db.refresh(db_user)
 
+        logger.info(f"Created user profile for {email} with ID {db_user.id}")
         return db_user
 
     def get_user_by_supertokens_id(self, supertokens_user_id: str) -> Optional[User]:
@@ -123,10 +128,12 @@ class AuthService:
         """
         # Check if username is available
         if not self.is_username_available(username):
+            logger.warning(f"Signup attempt with taken username: {username}")
             return False, "Username already taken", None
 
         # Check if email is already registered in our database
         if self.get_user_by_email(email):
+            logger.warning(f"Signup attempt with existing email: {email}")
             return False, "Email already registered", None
 
         # Sign up with SuperTokens
@@ -141,10 +148,13 @@ class AuthService:
                     username=username,
                     full_name=full_name,
                 )
+                logger.info(f"User signed up successfully: {email}")
                 return True, "User created successfully", user
             except Exception as e:
+                logger.error(f"Failed to create user profile for {email}: {str(e)}")
                 return False, f"Failed to create user profile: {str(e)}", None
         else:
+            logger.warning(f"SuperTokens signup failed for {email}")
             return False, "Email already exists or invalid data", None
 
     async def signin_user(

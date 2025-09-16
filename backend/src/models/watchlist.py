@@ -3,13 +3,23 @@ Watchlist SQLModel models.
 Defines anime watchlist schema with relationships to users.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
+from enum import Enum
 from typing import Optional, TYPE_CHECKING
 
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
     from .user import User
+
+
+class WatchStatus(str, Enum):
+    """Enum for watchlist item status."""
+    PLAN_TO_WATCH = "plan_to_watch"
+    WATCHING = "watching"
+    COMPLETED = "completed"
+    ON_HOLD = "on_hold"
+    DROPPED = "dropped"
 
 
 class WatchlistItemBase(SQLModel):
@@ -23,7 +33,7 @@ class WatchlistItemBase(SQLModel):
     anime_score: Optional[float] = Field(
         default=None, ge=0.0, le=10.0, description="Anime score/rating"
     )
-    status: str = Field(default="plan_to_watch", description="Watch status")
+    status: WatchStatus = Field(default=WatchStatus.PLAN_TO_WATCH, description="Watch status")
     notes: Optional[str] = Field(
         default=None, max_length=1000, description="User notes about the anime"
     )
@@ -38,8 +48,8 @@ class WatchlistItem(WatchlistItemBase, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Relationships
     user: "User" = Relationship(back_populates="watchlist_items")
@@ -57,7 +67,7 @@ class WatchlistItemUpdate(SQLModel):
     anime_title: Optional[str] = Field(default=None, max_length=200)
     anime_picture_url: Optional[str] = None
     anime_score: Optional[float] = Field(default=None, ge=0.0, le=10.0)
-    status: Optional[str] = None
+    status: Optional[WatchStatus] = None
     notes: Optional[str] = Field(default=None, max_length=1000)
 
 

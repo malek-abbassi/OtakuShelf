@@ -8,8 +8,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
-from ..auth import get_current_user, AuthService
+from ..auth import get_current_user
 from ..db.core import get_session
+from ..dependencies import AuthServiceDep
 from ..models import User, UserUpdate, UserRead
 from ..schemas import (
     UserSignupRequest,
@@ -26,15 +27,13 @@ router = APIRouter(prefix="/users", tags=["users"])
 )
 async def signup(
     signup_data: UserSignupRequest,
-    db: Annotated[Session, Depends(get_session)],
+    auth_service: AuthServiceDep,
 ):
     """
     Register a new user account.
 
     Creates a new user with SuperTokens authentication and database profile.
     """
-    auth_service = AuthService(db)
-
     success, message, user = await auth_service.signup_user(
         email=signup_data.email,
         password=signup_data.password,
@@ -54,15 +53,13 @@ async def signup(
 @router.post("/signin", response_model=SuccessResponse)
 async def signin(
     signin_data: UserLoginRequest,
-    db: Annotated[Session, Depends(get_session)],
+    auth_service: AuthServiceDep,
 ):
     """
     Sign in an existing user.
 
     Authenticates user with SuperTokens and returns user information.
     """
-    auth_service = AuthService(db)
-
     success, message, user = await auth_service.signin_user(
         email=signin_data.email,
         password=signin_data.password,
@@ -107,15 +104,13 @@ async def get_current_user_profile(
 async def update_current_user_profile(
     user_update: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_session)],
+    auth_service: AuthServiceDep,
 ):
     """
     Update current user's profile information.
 
     Allows updating username and full_name.
     """
-    auth_service = AuthService(db)
-
     # Check if username is being updated and if it's available
     if user_update.username and user_update.username != current_user.username:
         if not auth_service.is_username_available(user_update.username):
@@ -128,9 +123,9 @@ async def update_current_user_profile(
     for field, value in update_data.items():
         setattr(current_user, field, value)
 
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
+    auth_service.db.add(current_user)
+    auth_service.db.commit()
+    auth_service.db.refresh(current_user)
 
     return UserRead.model_validate(current_user)
 
@@ -138,14 +133,13 @@ async def update_current_user_profile(
 @router.get("/check-username/{username}", response_model=dict)
 async def check_username_availability(
     username: str,
-    db: Annotated[Session, Depends(get_session)],
+    auth_service: AuthServiceDep,
 ):
     """
     Check if a username is available.
 
     Returns availability status for the given username.
     """
-    auth_service = AuthService(db)
     is_available = auth_service.is_username_available(username)
 
     return {

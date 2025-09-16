@@ -3,9 +3,10 @@ User and Watchlist SQLModel models.
 Defines database schema with proper relationships and constraints.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, TYPE_CHECKING
 
+from pydantic import EmailStr
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ class UserBase(SQLModel):
     """Base user model with common fields."""
 
     username: str = Field(index=True, unique=True, min_length=3, max_length=50)
-    email: str = Field(index=True, unique=True)
+    email: EmailStr = Field(index=True, unique=True)
     full_name: Optional[str] = Field(default=None, max_length=100)
     is_active: bool = Field(default=True)
 
@@ -30,8 +31,8 @@ class User(UserBase, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     supertokens_user_id: str = Field(index=True, unique=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Relationships
     watchlist_items: list["WatchlistItem"] = Relationship(back_populates="user")

@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
+from .auth.service import AuthService
 from .db.core import get_session, engine
 from .config import get_settings
 
@@ -98,6 +99,14 @@ def get_db_session() -> Generator[Session, None, None]:
 
 # Common dependencies
 DatabaseDep = Annotated[Session, Depends(get_session)]
+
+
+def get_auth_service(db: Session = Depends(get_session)) -> AuthService:
+    """Get AuthService instance with database session."""
+    return AuthService(db)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 # Health check dependencies
