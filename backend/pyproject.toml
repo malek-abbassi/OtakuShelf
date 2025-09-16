@@ -4,6 +4,7 @@ version = "0.0.1"
 requires-python = "==3.12.*" # Match Vercel's Python version
 dependencies = [
     "fastapi",
+    "uvicorn",
     "supertokens-python",
     "sqlmodel",
     "pydantic-settings",

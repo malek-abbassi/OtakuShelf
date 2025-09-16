@@ -1,11 +1,12 @@
 services:
-  # Note: If you are assigning a custom name to your db service on the line below, make sure it does not contain underscores
   db:
-    image: "postgres:latest"
+    image: postgres:latest
     environment:
       POSTGRES_USER: supertokens_user
       POSTGRES_PASSWORD: somePassword
       POSTGRES_DB: supertokens
+    volumes:
+      - supertokens_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     networks:
@@ -26,7 +27,7 @@ services:
       - 3567:3567
     environment:
       POSTGRESQL_CONNECTION_URI: "postgresql://supertokens_user:somePassword@db:5432/supertokens"
-      API_KEYS: someApiKey123123123123 # should match with supertokens setup in backend/src/main.py and 20 chars long at least
+      API_KEYS: someApiKey123123123123 # should match with supertokens setup in backend and 20 chars long at least
     networks:
       - app_network
     restart: unless-stopped
@@ -36,6 +37,65 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://username:password@backend_db:5432/otaku_shelf
+      - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+      - SUPERTOKENS_API_KEY=someApiKey123123123123 # should match with supertokens setup and 20 chars long at least
+      - API_DOMAIN=http://localhost:8000
+      - WEBSITE_DOMAIN=http://localhost:3000
+      - CORS_ORIGINS=["http://localhost:3000"]
+    depends_on:
+      - supertokens
+      - backend_db
+    restart: unless-stopped
+    networks:
+      - app_network
+  
+
+
+  backend_db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=otaku_shelf
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - backend_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Override runtime config for Docker
+      - NUXT_PUBLIC_API_BASE_URL=http://backend:8000
+      - NUXT_PUBLIC_API_DOMAIN=http://localhost:8000
+      - NUXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  supertokens_data:
+  backend_db_data:
 
 networks:
   app_network:

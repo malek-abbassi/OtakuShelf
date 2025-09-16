@@ -587,6 +587,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "sqlmodel" },
     { name = "supertokens-python" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -612,6 +613,7 @@ requires-dist = [
     { name = "pydantic-settings" },
     { name = "sqlmodel" },
     { name = "supertokens-python" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata.requires-dev]

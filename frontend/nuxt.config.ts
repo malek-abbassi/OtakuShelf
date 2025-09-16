@@ -87,21 +87,6 @@ export default defineNuxtConfig({
     },
   },
 
-  // Build optimizations
-  vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['vue', '@nuxt/ui'],
-            auth: ['supertokens-web-js'],
-            utils: ['zod', 'graphql-request'],
-          },
-        },
-      },
-    },
-  },
-
   // Runtime config
   runtimeConfig: {
     public: {
