@@ -59,9 +59,10 @@ services:
       - app_network
   
 
-
   backend_db:
     image: postgres:15
+    ports:
+      - "5431:5432" # Expose to host for local development
     environment:
       - POSTGRES_DB=otaku_shelf
       - POSTGRES_USER=username

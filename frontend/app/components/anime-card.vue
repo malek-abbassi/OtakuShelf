@@ -2,6 +2,7 @@
 import type { Anime } from '~/composables/use-ani-list';
 
 import { useAnimeUtils } from '~/composables/use-anime-utils';
+import { WATCH_STATUS_OPTIONS } from '~/types/watchlist';
 
 type Props = {
   anime: Anime;
@@ -19,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  addToWatchlist: [anime: Anime];
+  addToWatchlist: [anime: Anime, status: string];
   removeFromWatchlist: [animeId: number];
   click: [anime: Anime];
 }>();
@@ -55,20 +56,18 @@ function handleClick() {
   }
 }
 
-function handleAddToWatchlist(event: Event) {
-  event.stopPropagation();
-  emit('addToWatchlist', props.anime);
+function handleAddToWatchlist(status: string) {
+  emit('addToWatchlist', props.anime, status);
 }
 
-function handleRemoveFromWatchlist(event: Event) {
-  event.stopPropagation();
+function handleRemoveFromWatchlist() {
   emit('removeFromWatchlist', props.anime.id);
 }
 </script>
 
 <template>
   <UCard
-    class="group overflow-hidden transition-all duration-300 cursor-pointer"
+    class="group transition-all duration-300 cursor-pointer"
     :class="{
       'hover:shadow-lg hover:scale-[1.02]': !isLoading,
       'opacity-50': isLoading,
@@ -209,17 +208,26 @@ function handleRemoveFromWatchlist(event: Event) {
     <!-- Watchlist Actions Footer -->
     <template v-if="showWatchlistButton" #footer>
       <div class="flex gap-2">
-        <UButton
+        <UDropdownMenu
           v-if="!isInWatchlist"
-          variant="outline"
-          size="sm"
-          block
-          :disabled="isLoading"
-          @click="handleAddToWatchlist"
+          :items="WATCH_STATUS_OPTIONS.map(option => ({
+            label: option.label,
+            icon: 'i-heroicons-plus',
+            onSelect: () => handleAddToWatchlist(option.value),
+          }))"
+          @click.stop
         >
-          <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
-          Add to Watchlist
-        </UButton>
+          <UButton
+            variant="outline"
+            size="sm"
+            block
+            :disabled="isLoading"
+            trailing-icon="i-heroicons-chevron-down"
+            @click.stop
+          >
+            Add to Watchlist
+          </UButton>
+        </UDropdownMenu>
 
         <UButton
           v-else
