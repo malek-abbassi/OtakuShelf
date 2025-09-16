@@ -78,19 +78,25 @@ describe('useAuth composable', () => {
   });
 
   it('should handle user profile fetching', async () => {
+    // Mock successful session existence
+    vi.doMock('supertokens-web-js/recipe/session', () => ({
+      default: {
+        init: vi.fn(),
+        doesSessionExist: vi.fn().mockResolvedValue(true),
+        signOut: vi.fn(),
+        attemptRefreshingSession: vi.fn(),
+      },
+    }));
+
     // Mock successful API response
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        id: 1,
-        username: 'testuser',
-        email: 'test@example.com',
-        full_name: 'Test User',
-        is_active: true,
-        created_at: '2023-01-01T00:00:00Z',
-        watchlist_count: 5,
-      }),
+    globalThis.$fetch = vi.fn().mockResolvedValue({
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      full_name: 'Test User',
+      is_active: true,
+      created_at: '2023-01-01T00:00:00Z',
+      watchlist_count: 5,
     });
 
     const auth = useAuth();
@@ -108,9 +114,18 @@ describe('useAuth composable', () => {
   });
 
   it('should handle failed profile fetch', async () => {
+    // Mock session existence but failed API response
+    vi.doMock('supertokens-web-js/recipe/session', () => ({
+      default: {
+        init: vi.fn(),
+        doesSessionExist: vi.fn().mockResolvedValue(true),
+        signOut: vi.fn(),
+        attemptRefreshingSession: vi.fn(),
+      },
+    }));
+
     // Mock failed API response
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: false,
+    globalThis.$fetch = vi.fn().mockRejectedValue({
       status: 401,
       statusText: 'Unauthorized',
     });
@@ -202,6 +217,9 @@ describe('useAuth composable', () => {
         signOut: vi.fn(),
       },
     }));
+
+    // Mock $fetch to ensure it's not called
+    globalThis.$fetch = vi.fn();
 
     await auth.checkAuth();
 

@@ -163,37 +163,22 @@ async function handleEditUpdated() {
       <div class="flex items-center gap-2">
         <!-- View Mode Toggle -->
         <UButtonGroup>
-          <UButton
-            :variant="viewMode === 'grid' ? 'solid' : 'outline'"
-            icon="i-heroicons-squares-2x2"
-            @click="viewMode = 'grid'"
-          />
-          <UButton
-            :variant="viewMode === 'list' ? 'solid' : 'outline'"
-            icon="i-heroicons-list-bullet"
-            @click="viewMode = 'list'"
-          />
+          <UButton :variant="viewMode === 'grid' ? 'solid' : 'outline'" icon="i-heroicons-squares-2x2"
+            @click="viewMode = 'grid'" />
+          <UButton :variant="viewMode === 'list' ? 'solid' : 'outline'" icon="i-heroicons-list-bullet"
+            @click="viewMode = 'list'" />
         </UButtonGroup>
       </div>
     </div>
 
     <!-- Status Filters -->
     <div class="flex flex-wrap gap-2">
-      <UButton
-        v-for="option in statusOptions"
-        :key="option.value"
-        :variant="selectedStatus === option.value ? 'solid' : 'outline'"
-        size="sm"
-        @click="handleStatusFilter(option.value)"
-      >
+      <UButton v-for="option in statusOptions" :key="option.value"
+        :variant="selectedStatus === option.value ? 'solid' : 'outline'" size="sm"
+        @click="handleStatusFilter(option.value)">
         {{ option.label }}
-        <UBadge
-          v-if="option.count > 0"
-          :color="selectedStatus === option.value ? 'neutral' : 'neutral'"
-          variant="subtle"
-          size="xs"
-          class="ml-1"
-        >
+        <UBadge v-if="option.count > 0" :color="selectedStatus === option.value ? 'neutral' : 'neutral'"
+          variant="subtle" size="xs" class="ml-1">
           {{ option.count }}
         </UBadge>
       </UButton>
@@ -201,43 +186,29 @@ async function handleEditUpdated() {
 
     <!-- Search -->
     <div class="max-w-md">
-      <UInput
-        v-model="searchQuery"
-        placeholder="Search your watchlist..."
-        icon="i-heroicons-magnifying-glass"
-        size="lg"
-      />
+      <UInput v-model="searchQuery" placeholder="Search your watchlist..." icon="i-heroicons-magnifying-glass"
+        size="lg" />
     </div>
 
     <!-- Loading State -->
-    <LoadingState
-      v-if="isLoading && mounted"
-      message="Loading your watchlist..."
-    />
+    <LoadingState v-if="isLoading && mounted" message="Loading your watchlist..." />
 
     <!-- Initialization State -->
-    <LoadingState
-      v-else-if="!mounted"
-      message="Initializing..."
-    />
+    <LoadingState v-else-if="!mounted" message="Initializing..." />
 
     <!-- Error State -->
-    <ErrorState
-      v-else-if="error"
-      :message="error"
-      @retry="fetchWatchlist"
-    />
+    <UAlert v-else-if="error" color="error" variant="soft" :description="error">
+      <template #actions>
+        <UButton color="primary" @click="() => fetchWatchlist()">
+          Try Again
+        </UButton>
+      </template>
+    </UAlert>
 
     <!-- Empty State -->
-    <div
-      v-else-if="!hasItems && !isLoading"
-      class="text-center py-12"
-    >
+    <div v-else-if="!hasItems && !isLoading" class="text-center py-12">
       <div class="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-        <UIcon
-          name="i-heroicons-film"
-          class="w-12 h-12 text-gray-400"
-        />
+        <UIcon name="i-heroicons-film" class="w-12 h-12 text-gray-400" />
       </div>
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
         {{ searchQuery ? 'No results found' : 'Your watchlist is empty' }}
@@ -248,11 +219,7 @@ async function handleEditUpdated() {
           : 'Start by adding some anime to track your viewing progress'
         }}
       </p>
-      <UButton
-        v-if="!searchQuery"
-        to="/anime"
-        icon="i-heroicons-plus"
-      >
+      <UButton v-if="!searchQuery" to="/anime" icon="i-heroicons-plus">
         Browse Anime
       </UButton>
     </div>
@@ -260,41 +227,19 @@ async function handleEditUpdated() {
     <!-- Watchlist Items -->
     <div v-else-if="hasItems">
       <!-- Grid View -->
-      <div
-        v-if="viewMode === 'grid'"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        <WatchlistCard
-          v-for="item in filteredItems"
-          :key="item.id"
-          :item="item"
-          @status-change="handleStatusChange"
-          @edit="handleEdit"
-          @remove="handleRemove"
-        />
+      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <WatchlistCard v-for="item in filteredItems" :key="item.id" :item="item" @status-change="handleStatusChange"
+          @edit="handleEdit" @remove="handleRemove" />
       </div>
 
       <!-- List View -->
-      <div
-        v-else
-        class="space-y-4"
-      >
-        <WatchlistCard
-          v-for="item in filteredItems"
-          :key="item.id"
-          :item="item"
-          @status-change="handleStatusChange"
-          @edit="handleEdit"
-          @remove="handleRemove"
-        />
+      <div v-else class="space-y-4">
+        <WatchlistCard v-for="item in filteredItems" :key="item.id" :item="item" @status-change="handleStatusChange"
+          @edit="handleEdit" @remove="handleRemove" />
       </div>
     </div>
 
     <!-- Edit Modal -->
-    <EditWatchlistModal
-      v-model:open="showEditModal"
-      :item="editingItem"
-      @updated="handleEditUpdated"
-    />
+    <EditWatchlistModal v-model:open="showEditModal" :item="editingItem" @updated="handleEditUpdated" />
   </div>
 </template>

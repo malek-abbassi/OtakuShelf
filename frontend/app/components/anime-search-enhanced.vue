@@ -2,10 +2,10 @@
 import type { Anime, SearchResult } from '~/composables/use-ani-list';
 import type { WatchlistAddSchema } from '~/types/watchlist';
 
+import AnimeCard from '~/components/anime-card.vue';
 import { useAniList } from '~/composables/use-ani-list';
 import { useAuth } from '~/composables/use-auth';
 import { useWatchlist } from '~/composables/use-watchlist';
-import { WATCH_STATUS_OPTIONS } from '~/types/watchlist';
 
 type Props = {
   initialQuery?: string;
@@ -117,8 +117,8 @@ async function checkWatchlistStatus(animeList: Anime[]) {
   await Promise.allSettled(checks);
 }
 
-// Add anime to watchlist
-async function handleAddToWatchlist(anime: Anime, status: string = 'plan_to_watch') {
+// Add anime to watchlist with dropdown selection
+async function handleAddToWatchlistDropdown(anime: Anime) {
   if (!isLoggedIn.value) {
     navigateTo('/auth');
     return;
@@ -134,7 +134,7 @@ async function handleAddToWatchlist(anime: Anime, status: string = 'plan_to_watc
       animeTitle: anime.title.romaji || anime.title.english || anime.title.native || 'Unknown Title',
       animePictureUrl: imageUrl && imageUrl.startsWith('http') ? imageUrl : undefined,
       animeScore: score ? score / 10 : undefined,
-      status,
+      status: 'plan_to_watch',
       notes: '',
     };
 
@@ -171,11 +171,6 @@ function isInWatchlist(animeId: number): boolean {
   return watchlistItems.value.has(animeId);
 }
 
-function getWatchlistStatus(animeId: number): string | null {
-  const item = watchlistItems.value.get(animeId);
-  return item?.status || null;
-}
-
 function isAdding(animeId: number): boolean {
   return addingToWatchlist.value.has(animeId);
 }
@@ -192,43 +187,27 @@ onMounted(() => {
   <div class="space-y-6">
     <!-- Search Input -->
     <div class="flex gap-4">
-      <UInput
-        v-model="searchQuery"
-        placeholder="Search for anime..."
-        size="lg"
-        class="flex-1"
-        :loading="pending"
-        @keyup.enter="handleSearchClick"
-      >
+      <UInput v-model="searchQuery" placeholder="Search for anime..." size="lg" class="flex-1" :loading="pending"
+        @keyup.enter="handleSearchClick">
         <template #leading>
           <UIcon name="i-heroicons-magnifying-glass" />
         </template>
       </UInput>
-      <UButton
-        size="lg"
-        :loading="pending"
-        :disabled="!searchQuery.trim()"
-        @click="handleSearchClick"
-      >
+      <UButton size="lg" :loading="pending" :disabled="!searchQuery.trim()" @click="handleSearchClick">
         Search
       </UButton>
     </div>
 
     <!-- Loading State -->
-    <LoadingState
-      v-if="pending"
-      message="Searching anime..."
-      size="md"
-    />
+    <div v-if="pending" class="flex flex-col items-center justify-center py-12">
+      <ULoading class="mb-4" />
+      <p class="text-gray-600 dark:text-gray-400">
+        Searching anime...
+      </p>
+    </div>
 
     <!-- Error State -->
-    <UAlert
-      v-if="error"
-      color="error"
-      variant="soft"
-      title="Search Error"
-      :description="error.message"
-    />
+    <UAlert v-if="error" color="error" variant="soft" title="Search Error" :description="error.message" />
 
     <!-- Results -->
     <div v-if="searchResults && !pending" class="space-y-4">
@@ -237,23 +216,14 @@ onMounted(() => {
           Found {{ searchResults.pageInfo.total }} results
         </h3>
         <div v-if="searchResults.pageInfo.lastPage > 1" class="flex gap-2">
-          <UButton
-            variant="outline"
-            size="sm"
-            :disabled="currentPage === 1"
-            @click="changePage(currentPage - 1)"
-          >
+          <UButton variant="outline" size="sm" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
             Previous
           </UButton>
           <span class="flex items-center px-3 text-sm">
             Page {{ currentPage }} of {{ searchResults.pageInfo.lastPage }}
           </span>
-          <UButton
-            variant="outline"
-            size="sm"
-            :disabled="!searchResults.pageInfo.hasNextPage"
-            @click="changePage(currentPage + 1)"
-          >
+          <UButton variant="outline" size="sm" :disabled="!searchResults.pageInfo.hasNextPage"
+            @click="changePage(currentPage + 1)">
             Next
           </UButton>
         </div>
@@ -261,118 +231,10 @@ onMounted(() => {
 
       <!-- Anime Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <UCard
-          v-for="anime in searchResults.media"
-          :key="anime.id"
-          class="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-          @click="selectAnime(anime)"
-        >
-          <div class="space-y-3">
-            <!-- Cover Image -->
-            <div class="relative aspect-[3/4] overflow-hidden rounded-lg">
-              <NuxtImg
-                :src="anime.coverImage.large || anime.coverImage.medium"
-                :alt="anime.title.romaji || anime.title.english || 'Anime cover'"
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-
-              <!-- Watchlist Status Badge -->
-              <div
-                v-if="isInWatchlist(anime.id)"
-                class="absolute top-2 right-2"
-              >
-                <UBadge
-                  :color="WATCH_STATUS_OPTIONS.find(opt => opt.value === getWatchlistStatus(anime.id))?.color || 'neutral'"
-                  variant="solid"
-                  size="sm"
-                >
-                  {{ WATCH_STATUS_OPTIONS.find(opt => opt.value === getWatchlistStatus(anime.id))?.label || 'In List' }}
-                </UBadge>
-              </div>
-            </div>
-
-            <!-- Title -->
-            <div>
-              <h4 class="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
-                {{ anime.title.romaji || anime.title.english || anime.title.native }}
-              </h4>
-            </div>
-
-            <!-- Score and Year -->
-            <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
-              <div class="flex items-center gap-1">
-                <UIcon name="i-heroicons-star" class="w-3 h-3" />
-                <span>{{ anime.averageScore || anime.meanScore || 'N/A' }}</span>
-              </div>
-              <span>{{ anime.seasonYear || 'Unknown' }}</span>
-            </div>
-
-            <!-- Genres -->
-            <div class="flex flex-wrap gap-1">
-              <UBadge
-                v-for="genre in anime.genres.slice(0, 2)"
-                :key="genre"
-                variant="subtle"
-                size="xs"
-              >
-                {{ genre }}
-              </UBadge>
-            </div>
-          </div>
-
-          <!-- Watchlist Actions -->
-          <template v-if="showWatchlistActions && isLoggedIn" #footer>
-            <div v-if="!isInWatchlist(anime.id)" class="flex gap-2">
-              <UDropdownMenu
-                :items="WATCH_STATUS_OPTIONS.map(option => ({
-                  label: option.label,
-                  icon: 'i-heroicons-plus',
-                  click: () => handleAddToWatchlist(anime, option.value),
-                }))"
-              >
-                <UButton
-                  variant="outline"
-                  size="sm"
-                  :loading="isAdding(anime.id)"
-                  :disabled="isAdding(anime.id)"
-                  block
-                  @click.stop
-                >
-                  <template v-if="isAdding(anime.id)">
-                    Adding...
-                  </template>
-                  <template v-else>
-                    <UIcon name="i-heroicons-plus" class="w-4 h-4 mr-1" />
-                    Add to Watchlist
-                  </template>
-                </UButton>
-              </UDropdownMenu>
-            </div>
-            <div v-else class="text-center">
-              <UBadge
-                :color="WATCH_STATUS_OPTIONS.find(opt => opt.value === getWatchlistStatus(anime.id))?.color || 'neutral'"
-                variant="subtle"
-                size="sm"
-              >
-                <UIcon name="i-heroicons-check" class="w-3 h-3 mr-1" />
-                In Watchlist
-              </UBadge>
-            </div>
-          </template>
-
-          <!-- Login prompt for non-authenticated users -->
-          <template v-else-if="showWatchlistActions && !isLoggedIn" #footer>
-            <UButton
-              variant="outline"
-              size="sm"
-              block
-              @click.stop="navigateTo('/auth')"
-            >
-              Login to Add
-            </UButton>
-          </template>
-        </UCard>
+        <AnimeCard v-for="anime in searchResults.media" :key="anime.id" :anime="anime"
+          :is-in-watchlist="isInWatchlist(anime.id)" :is-loading="isAdding(anime.id)"
+          :show-watchlist-button="showWatchlistActions && isLoggedIn" @click="selectAnime"
+          @add-to-watchlist="handleAddToWatchlistDropdown" />
       </div>
     </div>
 

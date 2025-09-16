@@ -1,4 +1,55 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
+
+// Mock the runtime config
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => ({
+    public: {
+      apiBaseUrl: 'http://localhost:8000',
+    },
+  });
+});
+
+// Mock the toast composable
+mockNuxtImport('useToast', () => {
+  return () => ({
+    add: vi.fn(),
+    remove: vi.fn(),
+    clear: vi.fn(),
+  });
+});
+
+// Mock useAsyncData to prevent automatic fetching
+mockNuxtImport('useAsyncData', () => {
+  return (key: string, fetcher: () => any, _options?: any) => {
+    const dataRef = ref({
+      items: [],
+      status_counts: {},
+      total_count: 0,
+    });
+    const statusRef = ref('idle');
+
+    const refresh = vi.fn().mockImplementation(async () => {
+      try {
+        const result = await fetcher();
+        dataRef.value = result;
+        statusRef.value = 'success';
+        return result;
+      }
+      catch (error) {
+        statusRef.value = 'error';
+        throw error;
+      }
+    });
+
+    return {
+      data: dataRef,
+      status: statusRef,
+      refresh,
+    };
+  };
+});
 
 describe('useWatchlist composable', () => {
   let useWatchlist: any;
@@ -81,7 +132,14 @@ describe('useWatchlist composable', () => {
       updated_at: '2023-01-01T00:00:00Z',
     };
 
-    globalThis.$fetch = vi.fn().mockResolvedValue(mockResponse);
+    // Mock POST request for adding item
+    globalThis.$fetch = vi.fn()
+      .mockResolvedValueOnce(mockResponse) // First call for POST
+      .mockResolvedValueOnce({ // Second call for GET (refresh)
+        items: [mockResponse],
+        status_counts: { watching: 1, completed: 0, plan_to_watch: 0, dropped: 0, on_hold: 0 },
+        total_count: 1,
+      });
 
     const watchlist = useWatchlist();
     const initialCount = watchlist.watchlistItems.value.length;

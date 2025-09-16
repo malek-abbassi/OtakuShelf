@@ -1,4 +1,4 @@
-import { GraphQLClient } from 'graphql-request';
+import type { Ref } from 'vue';
 
 import { GET_ANIME_DETAILS, SEARCH_ANIME } from '../../queries/anime';
 
@@ -98,20 +98,39 @@ export type SearchResult = {
 };
 
 export function useAniList() {
-  const client = new GraphQLClient('https://graphql.anilist.co');
+  const _config = useRuntimeConfig();
 
+  // Search anime with Nuxt's useFetch for better SSR and caching
   const searchAnime = async (
     search: string,
     page: number = 1,
     perPage: number = 20,
   ): Promise<SearchResult> => {
     try {
-      const data = await client.request(SEARCH_ANIME, {
-        search,
-        page,
-        perPage,
-      }) as { Page: SearchResult };
-      return data.Page;
+      const response = await $fetch<{
+        data: { Page: SearchResult };
+        errors?: any[];
+      }>('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: {
+          query: SEARCH_ANIME,
+          variables: {
+            search,
+            page,
+            perPage,
+          },
+        },
+      });
+
+      if (response.errors) {
+        throw new Error(response.errors[0]?.message || 'Failed to search anime');
+      }
+
+      return response.data.Page;
     }
     catch (error) {
       console.error('Error searching anime:', error);
@@ -119,10 +138,29 @@ export function useAniList() {
     }
   };
 
+  // Get anime details with Nuxt's useFetch
   const getAnimeDetails = async (id: number): Promise<Anime> => {
     try {
-      const data = await client.request(GET_ANIME_DETAILS, { id }) as { Media: Anime };
-      return data.Media;
+      const response = await $fetch<{
+        data: { Media: Anime };
+        errors?: any[];
+      }>('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: {
+          query: GET_ANIME_DETAILS,
+          variables: { id },
+        },
+      });
+
+      if (response.errors) {
+        throw new Error(response.errors[0]?.message || 'Failed to fetch anime details');
+      }
+
+      return response.data.Media;
     }
     catch (error) {
       console.error('Error fetching anime details:', error);
@@ -130,8 +168,51 @@ export function useAniList() {
     }
   };
 
+  // Get anime details with useFetch composable for reactive data
+  const useAnimeDetails = (id: Ref<number | null>) => {
+    const { data, error, pending, refresh } = useFetch<{
+      data: { Media: Anime };
+      errors?: any[];
+    }>('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: computed(() => ({
+        query: GET_ANIME_DETAILS,
+        variables: { id: id.value },
+      })),
+      watch: [id],
+      server: true,
+      lazy: true,
+      default: () => ({
+        data: {
+          Media: {} as Anime,
+        },
+        errors: undefined,
+      }),
+    });
+
+    // Computed property to get the anime data with error handling
+    const anime = computed(() => {
+      if (data.value?.errors) {
+        throw new Error(data.value.errors[0]?.message || 'Failed to fetch anime details');
+      }
+      return data.value?.data.Media;
+    });
+
+    return {
+      data: anime,
+      error,
+      pending,
+      refresh,
+    };
+  };
+
   return {
     searchAnime,
     getAnimeDetails,
+    useAnimeDetails,
   };
 }
