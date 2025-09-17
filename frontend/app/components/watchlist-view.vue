@@ -1,11 +1,16 @@
 <script lang="ts" setup>
 import type { WatchlistItem } from '~/types/watchlist';
 
+// Component imports
+import EditWatchlistModal from '~/components/edit-watchlist-modal.vue';
+import WatchlistCard from '~/components/watchlist-card.vue';
+import { useErrorHandler } from '~/composables/use-error-handler';
 import { useWatchlist } from '~/composables/use-watchlist';
 import { WATCH_STATUS_OPTIONS } from '~/types/watchlist';
 
 // Composables
 const { isLoggedIn } = useAuth();
+const { showErrorToast } = useErrorHandler();
 const {
   watchlistItems,
   statusCounts,
@@ -114,6 +119,7 @@ async function handleStatusChange(item: WatchlistItem, newStatus: string) {
       statusCode: err?.statusCode,
       response: err?.response,
     });
+    showErrorToast(err, 'Update Watchlist Status');
   }
 }
 
@@ -132,6 +138,7 @@ async function handleRemove(item: WatchlistItem) {
     }
     catch (err) {
       console.error('Error removing item:', err);
+      showErrorToast(err, 'Remove from Watchlist');
     }
   }
 }
@@ -148,27 +155,29 @@ async function handleEditUpdated() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6" data-testid="watchlist-view">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-testid="watchlist-header">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           My Watchlist
         </h1>
-        <p class="text-gray-600 dark:text-gray-300">
+        <p class="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
           Manage your anime collection and track your progress
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 self-start sm:self-auto" data-testid="watchlist-controls">
         <!-- View Mode Toggle -->
-        <UButtonGroup>
+        <UButtonGroup data-testid="view-mode-toggle">
           <UButton
             :variant="viewMode === 'grid' ? 'solid' : 'outline'" icon="i-heroicons-squares-2x2"
+            data-testid="grid-view-button"
             @click="viewMode = 'grid'"
           />
           <UButton
             :variant="viewMode === 'list' ? 'solid' : 'outline'" icon="i-heroicons-list-bullet"
+            data-testid="list-view-button"
             @click="viewMode = 'list'"
           />
         </UButtonGroup>
@@ -176,10 +185,11 @@ async function handleEditUpdated() {
     </div>
 
     <!-- Status Filters -->
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2 overflow-x-auto pb-2" data-testid="status-filters">
       <UButton
         v-for="option in statusOptions" :key="option.value"
         :variant="selectedStatus === option.value ? 'solid' : 'outline'" size="sm"
+        :data-testid="`status-filter-${option.value}`"
         @click="handleStatusFilter(option.value)"
       >
         {{ option.label }}
@@ -193,30 +203,35 @@ async function handleEditUpdated() {
     </div>
 
     <!-- Search -->
-    <div class="max-w-md">
+    <div class="max-w-md" data-testid="watchlist-search">
       <UInput
         v-model="searchQuery" placeholder="Search your watchlist..." icon="i-heroicons-magnifying-glass"
         size="lg"
+        data-testid="watchlist-search-input"
       />
     </div>
 
     <!-- Loading State -->
-    <LoadingState v-if="isLoading && mounted" message="Loading your watchlist..." />
+    <div v-if="isLoading && mounted" class="flex items-center justify-center py-12" data-testid="watchlist-loading">
+      <LoadingState size="lg" text="Loading your watchlist..." />
+    </div>
 
     <!-- Initialization State -->
-    <LoadingState v-else-if="!mounted" message="Initializing..." />
+    <div v-else-if="!mounted" class="flex items-center justify-center py-12" data-testid="watchlist-initializing">
+      <LoadingState size="lg" text="Initializing..." />
+    </div>
 
     <!-- Error State -->
-    <UAlert v-else-if="error" color="error" variant="soft" :description="error">
+    <UAlert v-else-if="error" color="error" variant="soft" :description="error" data-testid="watchlist-error">
       <template #actions>
-        <UButton color="primary" @click="() => fetchWatchlist()">
+        <UButton color="primary" data-testid="watchlist-retry-button" @click="() => fetchWatchlist()">
           Try Again
         </UButton>
       </template>
     </UAlert>
 
     <!-- Empty State -->
-    <div v-else-if="!hasItems && !isLoading" class="text-center py-12">
+    <div v-else-if="!hasItems && !isLoading" class="text-center py-12" data-testid="watchlist-empty">
       <div class="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
         <UIcon name="i-heroicons-film" class="w-12 h-12 text-gray-400" />
       </div>
@@ -229,15 +244,15 @@ async function handleEditUpdated() {
           : 'Start by adding some anime to track your viewing progress'
         }}
       </p>
-      <UButton v-if="!searchQuery" to="/anime" icon="i-heroicons-plus">
+      <UButton v-if="!searchQuery" to="/anime" icon="i-heroicons-plus" data-testid="browse-anime-button">
         Browse Anime
       </UButton>
     </div>
 
     <!-- Watchlist Items -->
-    <div v-else-if="hasItems">
+    <div v-else-if="hasItems" data-testid="watchlist-items">
       <!-- Grid View -->
-      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" data-testid="watchlist-grid">
         <WatchlistCard
           v-for="item in filteredItems" :key="item.id" :item="item" @status-change="handleStatusChange"
           @edit="handleEdit" @remove="handleRemove"
@@ -245,7 +260,7 @@ async function handleEditUpdated() {
       </div>
 
       <!-- List View -->
-      <div v-else class="space-y-4">
+      <div v-else class="space-y-4" data-testid="watchlist-list">
         <WatchlistCard
           v-for="item in filteredItems" :key="item.id" :item="item" @status-change="handleStatusChange"
           @edit="handleEdit" @remove="handleRemove"
@@ -254,6 +269,6 @@ async function handleEditUpdated() {
     </div>
 
     <!-- Edit Modal -->
-    <EditWatchlistModal v-model:open="showEditModal" :item="editingItem" @updated="handleEditUpdated" />
+    <EditWatchlistModal v-model:open="showEditModal" :item="editingItem" data-testid="edit-watchlist-modal" @updated="handleEditUpdated" />
   </div>
 </template>

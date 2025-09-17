@@ -2,17 +2,17 @@ import { expect, test } from '@nuxt/test-utils/playwright';
 
 test.describe('Settings Page', () => {
   test('should load settings page', async ({ page, goto }) => {
-    await goto('/settings');
+    await goto('/settings', { waitUntil: 'hydration' });
     await expect(page).toHaveURL(/.*settings/);
   });
 
   test('should display settings header', async ({ page, goto }) => {
-    await goto('/settings');
+    await goto('/settings', { waitUntil: 'hydration' });
     await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
   });
 
   test('should display settings form elements', async ({ page, goto }) => {
-    await goto('/settings');
+    await goto('/settings', { waitUntil: 'hydration' });
     // Check for common settings form elements
     await expect(page.locator('form, .settings-form').first()).toBeVisible();
   });
@@ -20,7 +20,7 @@ test.describe('Settings Page', () => {
 
 test.describe('User Interactions', () => {
   test('should handle navigation between pages', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Wait for page to load completely
     await page.waitForLoadState('networkidle');
 
@@ -32,17 +32,17 @@ test.describe('User Interactions', () => {
     }
     else {
       // If link not found, navigate directly
-      await goto('/anime');
+      await goto('/anime', { waitUntil: 'hydration' });
       await expect(page).toHaveURL(/.*anime/);
     }
 
     // Navigate back to home
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     await expect(page).toHaveURL(/.*\/$/);
   });
 
   test('should handle responsive navigation', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Test mobile menu if it exists (this might not be present in current design)
     const mobileMenu = page.locator('.mobile-menu, .hamburger, [data-testid*="mobile-menu"]');
     if (await mobileMenu.isVisible()) {
@@ -58,7 +58,7 @@ test.describe('User Interactions', () => {
 
 test.describe('Loading States', () => {
   test('should display loading states during navigation', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Wait for page to load completely
     await page.waitForLoadState('networkidle');
 
@@ -79,7 +79,7 @@ test.describe('Loading States', () => {
     }
     else {
       // If link not found, navigate directly
-      await goto('/anime');
+      await goto('/anime', { waitUntil: 'hydration' });
       await expect(page).toHaveURL(/.*anime/);
     }
   });
@@ -93,7 +93,7 @@ test.describe('Error Handling', () => {
   });
 
   test('should display error states', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Check for error state components if they exist
     const errorState = page.locator('.error-state, [data-testid*="error"]');
     if (await errorState.isVisible()) {

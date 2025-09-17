@@ -40,9 +40,7 @@ useHead({
 </script>
 
 <template>
-  <NuxtLayout>
-    <div class="container mx-auto px-4 py-8">
-      <WatchlistView />
-    </div>
-  </NuxtLayout>
+  <ResponsiveContainer size="xl" padding="md" class="py-6 sm:py-8" data-testid="watchlist-page">
+    <WatchlistView />
+  </ResponsiveContainer>
 </template>

@@ -8,6 +8,7 @@ import Pagination from '~/components/pagination.vue';
 import SearchInput from '~/components/search-input.vue';
 import { useAniList } from '~/composables/use-ani-list';
 import { useAnimeSearchWithWatchlist } from '~/composables/use-anime-search-with-watchlist';
+import { useErrorHandler } from '~/composables/use-error-handler';
 
 type Props = {
   initialQuery?: string;
@@ -35,6 +36,7 @@ const emit = defineEmits<Emits>();
 // Composables
 const { searchAnime } = useAniList();
 const { isLoggedIn } = useAuth();
+const { showErrorToast } = useErrorHandler();
 const {
   checkWatchlistStatus,
   handleAddToWatchlist,
@@ -94,6 +96,7 @@ async function performSearch(page = 1) {
   catch (err) {
     error.value = err as Error;
     searchResults.value = null;
+    showErrorToast(err, 'Anime Search');
   }
   finally {
     pending.value = false;
@@ -126,18 +129,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6" data-testid="anime-search-enhanced">
     <!-- Search Input -->
     <SearchInput
       v-model="searchQuery"
       placeholder="Search for anime..."
       :loading="pending"
       size="lg"
+      data-testid="anime-search-input"
       @search="handleSearchClick"
     />
 
     <!-- Loading State -->
-    <div v-if="pending" class="flex flex-col items-center justify-center py-12">
+    <div v-if="pending" class="flex flex-col items-center justify-center py-12" data-testid="anime-search-loading">
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-primary-600 mb-4" />
       <p class="text-gray-600 dark:text-gray-400">
         Searching anime...
@@ -148,10 +152,10 @@ onMounted(() => {
     </div>
 
     <!-- Error State -->
-    <UAlert v-if="error" color="error" variant="soft" title="Search Error" :description="error.message" />
+    <UAlert v-if="error" color="error" variant="soft" title="Search Error" :description="error.message" data-testid="anime-search-error" />
 
     <!-- Results -->
-    <div v-if="searchResults && !pending" class="space-y-4">
+    <div v-if="searchResults && !pending" class="space-y-4" data-testid="anime-search-results">
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-semibold">
           Found {{ searchResults.pageInfo.total }} results
@@ -165,7 +169,7 @@ onMounted(() => {
       </div>
 
       <!-- Anime Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in-0 duration-300">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 animate-in fade-in-0 duration-300" data-testid="anime-grid">
         <AnimeCard
           v-for="anime in searchResults.media" :key="anime.id" :anime="anime"
           :is-in-watchlist="isInWatchlist(anime.id)" :is-loading="isAdding(anime.id)"
@@ -181,6 +185,7 @@ onMounted(() => {
       title="No anime found"
       description="Try searching with different keywords or check your spelling."
       icon="i-heroicons-face-frown"
+      data-testid="anime-search-empty"
     />
   </div>
 </template>

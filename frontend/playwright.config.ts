@@ -1,12 +1,28 @@
 import type { ConfigOptions } from '@nuxt/test-utils/playwright';
 
 import { defineConfig, devices } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 
-export default defineConfig<ConfigOptions>({
-  testDir: './tests/e2e',
+async function checkDevServerRunning(url: string) {
+  try {
+    const res = await fetch(url);
+    return res.ok;
+  }
+  catch {
+    return false;
+  }
+}
+
+const devServerUrl = 'http://localhost:3000';
+
+const isDevServerRunning = await checkDevServerRunning(devServerUrl);
+
+const config = defineConfig<ConfigOptions>({
+  testDir: fileURLToPath(new URL('./tests/e2e', import.meta.url)),
   use: {
     nuxt: {
-      rootDir: process.cwd(),
+      rootDir: fileURLToPath(new URL('./frontend', import.meta.url)),
+      host: isDevServerRunning ? devServerUrl : undefined,
     },
   },
   projects: [
@@ -33,10 +49,14 @@ export default defineConfig<ConfigOptions>({
       use: { ...devices['iPhone 12'] },
     },
   ],
-
-  webServer: {
-    command: 'pnpm run build && pnpm run preview',
-    port: 3000,
-    reuseExistingServer: true,
-  },
 });
+
+if (!isDevServerRunning) {
+  config.webServer = {
+    command: 'pnpm run build && pnpm run preview',
+    url: devServerUrl,
+    reuseExistingServer: true,
+  };
+}
+
+export default config;

@@ -2,66 +2,65 @@ import { expect, test } from '@nuxt/test-utils/playwright';
 
 test.describe('Anime Page', () => {
   test('should load anime page', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     await expect(page).toHaveURL(/.*anime/);
     // Wait for main content to load
-    await expect(page.locator('.space-y-6')).toBeVisible();
+    await expect(page.locator('[data-testid="anime-page"]')).toBeVisible();
   });
 
   test('should display anime page header', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     // Wait for page to be fully loaded
-    await expect(page.locator('.space-y-6')).toBeVisible();
-    await expect(page.locator('h1').filter({ hasText: 'Discover Anime' })).toBeVisible();
+    await expect(page.locator('[data-testid="anime-page"]')).toBeVisible();
+    await expect(page.locator('[data-testid="anime-page-header"] h1')).toHaveText('Discover Anime');
   });
 
   test('should display search functionality', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     // Wait for page to be fully loaded
-    await expect(page.locator('.space-y-6')).toBeVisible();
-    // Check for UInput search field with correct placeholder
-    await expect(page.locator('input[placeholder*="Search for anime"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="anime-page"]')).toBeVisible();
+    // Check for search input field with proper test ID
+    await expect(page.locator('[data-testid="anime-search-input"] [data-testid="search-input-field"]')).toBeVisible();
     // Check for search button
-    await expect(page.locator('button').filter({ hasText: 'Search' }).first()).toBeVisible();
+    await expect(page.locator('[data-testid="anime-search-input"] [data-testid="search-button"]')).toBeVisible();
   });
 
   test('should display anime cards or grid', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     // Wait for page to be fully loaded
-    await expect(page.locator('.space-y-6')).toBeVisible();
-    // Check for anime grid container (may be empty initially)
-    // Just check that the page structure is there
-    await expect(page.locator('.space-y-6')).toBeVisible();
+    await expect(page.locator('[data-testid="anime-page"]')).toBeVisible();
+    // Check for anime grid container
+    await expect(page.locator('[data-testid="anime-search-enhanced"]')).toBeVisible();
   });
 
   test('should handle search input', async ({ page, goto }) => {
-    await goto('/anime');
-    const searchInput = page.locator('input[placeholder*="Search for anime"]').first();
-    await searchInput.fill('Naruto');
+    await goto('/anime', { waitUntil: 'hydration' });
+    const searchInput = page.getByTestId('search-input-field');
+    await searchInput.pressSequentially('Naruto', { delay: 100 });
     await expect(searchInput).toHaveValue('Naruto');
 
     // Wait for debounced search to trigger (300ms debounce + some buffer)
     await page.waitForTimeout(500);
 
     // Wait for either loading state or search results
-    await expect(page.locator('.space-y-6')).toBeVisible();
+    await expect(page.locator('[data-testid="anime-search-enhanced"]')).toBeVisible();
 
     // Check if loading state appears
-    const loadingElement = page.locator('text=Searching anime...');
+    const loadingElement = page.locator('[data-testid="anime-search-loading"]');
     if (await loadingElement.isVisible()) {
       // Wait for loading to complete
       await expect(loadingElement).not.toBeVisible({ timeout: 10000 });
     }
 
     // Verify search results or empty state appears
-    const resultsContainer = page.locator('.space-y-6');
+    const resultsContainer = page.locator('[data-testid="anime-search-enhanced"]');
     await expect(resultsContainer).toBeVisible();
   });
 });
 
 test.describe('Anime Details', () => {
   test('should display anime details content', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     // Wait for page to be fully loaded
     await expect(page.locator('.space-y-6')).toBeVisible();
 

@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import type { Anime } from '~/composables/use-ani-list';
 
+import AnimeDescription from '~/components/anime-description.vue';
+import AnimeGenres from '~/components/anime-genres.vue';
+import AnimeImage from '~/components/anime-image.vue';
+import AnimeMeta from '~/components/anime-meta.vue';
+import AnimeWatchlistActions from '~/components/anime-watchlist-actions.vue';
 import { useAnimeUtils } from '~/composables/use-anime-utils';
-import { WATCH_STATUS_OPTIONS } from '~/types/watchlist';
 
 type Props = {
   anime: Anime;
@@ -26,28 +30,7 @@ const emit = defineEmits<{
 }>();
 
 // Use anime utils
-const {
-  getAnimeTitle,
-  formatStatus,
-  getStatusColor,
-  formatScore,
-} = useAnimeUtils();
-
-// Computed properties
-const formattedDate = computed(() => {
-  const date = props.anime.startDate;
-  if (!date?.year)
-    return 'TBA';
-  return date.year.toString();
-});
-
-const genres = computed(() => {
-  return props.anime.genres || [];
-});
-
-const imageUrl = computed(() => {
-  return props.anime.coverImage.large || props.anime.coverImage.medium;
-});
+const { getAnimeTitle } = useAnimeUtils();
 
 // Event handlers
 function handleClick() {
@@ -56,22 +39,22 @@ function handleClick() {
   }
 }
 
-function handleAddToWatchlist(status: string) {
-  emit('addToWatchlist', props.anime, status);
+function handleAddToWatchlist(anime: Anime, status: string) {
+  emit('addToWatchlist', anime, status);
 }
 
-function handleRemoveFromWatchlist() {
-  emit('removeFromWatchlist', props.anime.id);
+function handleRemoveFromWatchlist(animeId: number) {
+  emit('removeFromWatchlist', animeId);
 }
 </script>
 
 <template>
   <UCard
-    class="group transition-all duration-300 cursor-pointer"
+    class="group transition-all duration-300 cursor-pointer touch-manipulation min-h-[320px]"
     :class="{
       'hover:shadow-lg hover:scale-[1.02]': !isLoading,
       'opacity-50': isLoading,
-      'h-96': variant === 'compact',
+      'h-80 sm:h-96': variant === 'compact',
       'h-auto': variant !== 'compact',
     }"
     @click="handleClick"
@@ -85,52 +68,11 @@ function handleRemoveFromWatchlist() {
     </div>
 
     <!-- Cover Image -->
-    <div
-      class="relative overflow-hidden -m-6 mb-4"
-      :class="{
-        'h-48': variant === 'compact',
-        'h-64': variant === 'default',
-        'h-80': variant === 'detailed',
-      }"
-    >
-      <NuxtImg
-        :src="imageUrl"
-        :alt="getAnimeTitle(anime.title)"
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        loading="lazy"
-        placeholder="/placeholder-anime.svg"
-      />
-
-      <!-- Overlay with score and status -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-      <div class="absolute bottom-3 left-3 right-3">
-        <div class="flex items-center justify-between text-white">
-          <!-- Score -->
-          <div v-if="anime.averageScore || anime.meanScore" class="flex items-center gap-1">
-            <UIcon name="i-heroicons-star-solid" class="text-yellow-400 w-4 h-4" />
-            <span class="text-sm font-medium">{{ formatScore((anime.averageScore || anime.meanScore) ?? null) }}</span>
-          </div>
-
-          <!-- Status Badge -->
-          <UBadge
-            v-if="anime.status"
-            :color="getStatusColor(anime.status)"
-            variant="soft"
-            size="xs"
-          >
-            {{ formatStatus(anime.status) }}
-          </UBadge>
-        </div>
-      </div>
-
-      <!-- Watchlist Status Indicator -->
-      <div v-if="isInWatchlist" class="absolute top-3 right-3">
-        <UBadge color="success" variant="solid" size="xs">
-          <UIcon name="i-heroicons-check" class="w-3 h-3" />
-        </UBadge>
-      </div>
-    </div>
+    <AnimeImage
+      :anime="anime"
+      :variant="variant"
+      :is-in-watchlist="isInWatchlist"
+    />
 
     <!-- Card Content -->
     <div class="-mt-2 space-y-3">
@@ -147,101 +89,28 @@ function handleRemoveFromWatchlist() {
       </h3>
 
       <!-- Meta Information -->
-      <div
-        v-if="variant !== 'compact'"
-        class="space-y-2 text-sm text-gray-600 dark:text-gray-400"
-      >
-        <div class="flex items-center justify-between">
-          <span class="flex items-center gap-1">
-            <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
-            {{ formattedDate }}
-          </span>
-          <span v-if="anime.episodes" class="flex items-center gap-1">
-            <UIcon name="i-heroicons-film" class="w-4 h-4" />
-            {{ anime.episodes }} ep
-          </span>
-        </div>
+      <AnimeMeta :anime="anime" :variant="variant" />
 
-        <div v-if="genres.length" class="flex items-center gap-1">
-          <UIcon name="i-heroicons-tag" class="w-4 h-4" />
-          <span class="truncate">{{ genres.slice(0, 2).join(', ') }}</span>
-          <span v-if="genres.length > 2" class="text-xs">+{{ genres.length - 2 }}</span>
-        </div>
-      </div>
-
-      <!-- Compact version meta -->
-      <div
-        v-if="variant === 'compact'"
-        class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400"
-      >
-        <span>{{ formattedDate }}</span>
-        <span v-if="anime.episodes">{{ anime.episodes }} ep</span>
-      </div>
+      <!-- Genres -->
+      <AnimeGenres :anime="anime" :variant="variant" />
 
       <!-- Detailed version: Description -->
-      <div v-if="variant === 'detailed' && anime.description" class="text-sm text-gray-600 dark:text-gray-400">
-        <p class="line-clamp-3">
-          {{ anime.description.replace(/<[^>]*>/g, '') }}
-        </p>
-      </div>
-
-      <!-- Detailed version: Genres -->
-      <div v-if="variant === 'detailed' && genres.length" class="flex flex-wrap gap-1">
-        <UBadge
-          v-for="genre in genres.slice(0, 4)"
-          :key="genre"
-          variant="subtle"
-          size="xs"
-        >
-          {{ genre }}
-        </UBadge>
-        <UBadge
-          v-if="genres.length > 4"
-          variant="outline"
-          size="xs"
-        >
-          +{{ genres.length - 4 }}
-        </UBadge>
-      </div>
+      <AnimeDescription
+        v-if="variant === 'detailed'"
+        :anime="anime"
+        :max-lines="3"
+      />
     </div>
 
     <!-- Watchlist Actions Footer -->
     <template v-if="showWatchlistButton" #footer>
-      <div class="flex gap-2">
-        <UDropdownMenu
-          v-if="!isInWatchlist"
-          :items="WATCH_STATUS_OPTIONS.map(option => ({
-            label: option.label,
-            icon: 'i-heroicons-plus',
-            onSelect: () => handleAddToWatchlist(option.value),
-          }))"
-          @click.stop
-        >
-          <UButton
-            variant="outline"
-            size="sm"
-            block
-            :disabled="isLoading"
-            trailing-icon="i-heroicons-chevron-down"
-            @click.stop
-          >
-            Add to Watchlist
-          </UButton>
-        </UDropdownMenu>
-
-        <UButton
-          v-else
-          variant="soft"
-          color="success"
-          size="sm"
-          block
-          :disabled="isLoading"
-          @click="handleRemoveFromWatchlist"
-        >
-          <UIcon name="i-heroicons-check" class="w-4 h-4 mr-1" />
-          In Watchlist
-        </UButton>
-      </div>
+      <AnimeWatchlistActions
+        :anime="anime"
+        :is-in-watchlist="isInWatchlist"
+        :is-loading="isLoading"
+        @add-to-watchlist="handleAddToWatchlist"
+        @remove-from-watchlist="handleRemoveFromWatchlist"
+      />
     </template>
   </UCard>
 </template>
@@ -251,14 +120,6 @@ function handleRemoveFromWatchlist() {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

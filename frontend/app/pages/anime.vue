@@ -87,61 +87,60 @@ watch(() => route.query.q, (newQuery) => {
 </script>
 
 <template>
-  <NuxtLayout>
-    <div class="container mx-auto px-4 py-8">
-      <!-- Page Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Discover Anime
-        </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-400">
-          Search through thousands of anime titles from the AniList database
-        </p>
-      </div>
-
-      <!-- Search Component -->
-      <AnimeSearchEnhanced
-        :initial-query="(route.query.q as string) || ''" @select-anime="handleAnimeSelect"
-        @added-to-watchlist="handleWatchlistAdd"
-      />
-
-      <!-- Anime Details Modal - Official UModal Implementation -->
-      <UModal
-        v-model:open="isModalOpen" :title="selectedAnime ? getAnimeTitle(selectedAnime.title) : 'Anime Details'"
-        :dismissible="!isLoading" :ui="{
-          content: 'max-w-4xl w-full max-h-[90vh]',
-          body: 'p-0',
-        }"
-      >
-        <template #body="{ close }">
-          <!-- Loading State -->
-          <div v-if="isLoading" class="p-6">
-            <LoadingState message="Loading anime details..." size="lg" />
-          </div>
-
-          <!-- Anime Details -->
-          <div v-else-if="selectedAnimeDetails">
-            <AnimeDetails :anime="selectedAnimeDetails" />
-          </div>
-
-          <!-- Error State -->
-          <div v-else class="p-6">
-            <UAlert
-              color="error" variant="soft" title="Failed to load anime details"
-              description="We couldn't load the detailed information for this anime. This might be a temporary issue."
-            >
-              <template #actions>
-                <UButton color="primary" @click="retryLoadDetails">
-                  Try Again
-                </UButton>
-                <UButton color="neutral" variant="outline" @click="close">
-                  Close
-                </UButton>
-              </template>
-            </UAlert>
-          </div>
-        </template>
-      </UModal>
+  <ResponsiveContainer size="xl" padding="md" class="py-6 sm:py-8" data-testid="anime-page">
+    <!-- Page Header -->
+    <div class="mb-8" data-testid="anime-page-header">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        Discover Anime
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Search through thousands of anime titles from the AniList database
+      </p>
     </div>
-  </NuxtLayout>
+
+    <!-- Search Component -->
+    <AnimeSearchEnhanced
+      :initial-query="(route.query.q as string) || ''" @select-anime="handleAnimeSelect"
+      @added-to-watchlist="handleWatchlistAdd"
+    />
+
+    <!-- Anime Details Modal - Official UModal Implementation -->
+    <UModal
+      v-model:open="isModalOpen" :title="selectedAnime ? getAnimeTitle(selectedAnime.title) : 'Anime Details'"
+      :dismissible="!isLoading" :ui="{
+        content: 'max-w-4xl w-full max-h-[90vh] sm:max-h-[95vh]',
+        body: 'p-0 sm:p-4',
+      }"
+      data-testid="anime-details-modal"
+    >
+      <template #body="{ close }">
+        <!-- Loading State -->
+        <div v-if="isLoading" class="p-6 flex items-center justify-center" data-testid="anime-details-loading">
+          <LoadingState size="lg" text="Loading anime details..." />
+        </div>
+
+        <!-- Anime Details -->
+        <div v-else-if="selectedAnimeDetails" data-testid="anime-details-content">
+          <AnimeDetails :anime="selectedAnimeDetails" />
+        </div>
+
+        <!-- Error State -->
+        <div v-else class="p-6" data-testid="anime-details-error">
+          <UAlert
+            color="error" variant="soft" title="Failed to load anime details"
+            description="We couldn't load the detailed information for this anime. This might be a temporary issue."
+          >
+            <template #actions>
+              <UButton color="primary" @click="retryLoadDetails">
+                Try Again
+              </UButton>
+              <UButton color="neutral" variant="outline" @click="close">
+                Close
+              </UButton>
+            </template>
+          </UAlert>
+        </div>
+      </template>
+    </UModal>
+  </ResponsiveContainer>
 </template>
