@@ -1,17 +1,19 @@
-import { expect, test } from '@nuxt/test-utils/playwright';
+import { authHelpers, expect, test } from './test-setup';
 
 test.describe('Settings Page', () => {
-  test('should load settings page', async ({ page, goto }) => {
+  test('should redirect to auth when accessing settings without authentication', async ({ page, goto }) => {
     await goto('/settings', { waitUntil: 'hydration' });
-    await expect(page).toHaveURL(/.*settings/);
+    await authHelpers.expectAuthRedirect({ page, goto });
   });
 
-  test('should display settings header', async ({ page, goto }) => {
+  test('should display settings header when authenticated', async ({ page, goto }) => {
+    await authHelpers.authenticateUser({ page, goto });
     await goto('/settings', { waitUntil: 'hydration' });
     await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
   });
 
-  test('should display settings form elements', async ({ page, goto }) => {
+  test('should display settings form elements when authenticated', async ({ page, goto }) => {
+    await authHelpers.authenticateUser({ page, goto });
     await goto('/settings', { waitUntil: 'hydration' });
     // Check for common settings form elements
     await expect(page.locator('form, .settings-form').first()).toBeVisible();

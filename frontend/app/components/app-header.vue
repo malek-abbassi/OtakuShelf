@@ -138,6 +138,7 @@ watch(() => route.path, () => {
             <UDropdownMenu
               v-if="isLoggedIn && userProfile"
               :items="userDropdownItems"
+              testid="user-avatar"
             >
               <UAvatar
                 :alt="userProfile.fullName || userProfile.username"

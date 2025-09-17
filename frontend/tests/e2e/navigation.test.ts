@@ -1,4 +1,4 @@
-import { expect, test } from '@nuxt/test-utils/playwright';
+import { authHelpers, expect, test } from './test-setup';
 
 test.describe('Home Page', () => {
   test('should load home page', async ({ page, goto }) => {
@@ -29,9 +29,9 @@ test.describe('Navigation', () => {
     await expect(page.locator('h1, h2').filter({ hasText: /terms/i }).first()).toBeVisible();
   });
 
-  test('should navigate to settings page', async ({ page, goto }) => {
+  test('should redirect to auth when accessing settings without authentication', async ({ page, goto }) => {
     await goto('/settings', { waitUntil: 'hydration' });
-    await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
+    await authHelpers.expectAuthRedirect({ page, goto });
   });
 
   test('should navigate to anime page', async ({ page, goto }) => {
@@ -43,5 +43,19 @@ test.describe('Navigation', () => {
     await goto('/', { waitUntil: 'hydration' });
     // Check that header navigation links are present
     await expect(page.locator('a[href="/"], a[href="/anime"]').first()).toBeVisible();
+  });
+});
+
+test.describe('Authenticated Navigation', () => {
+  test('should access settings page when authenticated', async ({ page, goto }) => {
+    await authHelpers.authenticateUser({ page, goto });
+    await goto('/settings', { waitUntil: 'hydration' });
+    await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
+  });
+
+  test('should access watchlist page when authenticated', async ({ page, goto }) => {
+    await authHelpers.authenticateUser({ page, goto });
+    await goto('/watchlist', { waitUntil: 'hydration' });
+    await expect(page.locator('[data-testid="watchlist-view"]')).toBeVisible();
   });
 });
