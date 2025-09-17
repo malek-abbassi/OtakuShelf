@@ -2,12 +2,12 @@ import { expect, test } from '@nuxt/test-utils/playwright';
 
 test.describe('Home Page', () => {
   test('should load home page', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     await expect(page).toHaveTitle(/OtakuShelf/);
   });
 
   test('should display main content', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Check for main content elements
     await expect(page.locator('h1, h2, h3').first()).toBeVisible();
   });
@@ -30,17 +30,17 @@ test.describe('Navigation', () => {
   });
 
   test('should navigate to settings page', async ({ page, goto }) => {
-    await goto('/settings');
+    await goto('/settings', { waitUntil: 'hydration' });
     await expect(page.locator('h1, h2').filter({ hasText: /settings/i }).first()).toBeVisible();
   });
 
   test('should navigate to anime page', async ({ page, goto }) => {
-    await goto('/anime');
+    await goto('/anime', { waitUntil: 'hydration' });
     await expect(page).toHaveURL(/.*anime/);
   });
 
   test('should have working header navigation', async ({ page, goto }) => {
-    await goto('/');
+    await goto('/', { waitUntil: 'hydration' });
     // Check that header navigation links are present
     await expect(page.locator('a[href="/"], a[href="/anime"]').first()).toBeVisible();
   });

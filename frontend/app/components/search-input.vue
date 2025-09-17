@@ -33,7 +33,7 @@ function handleSearch() {
 </script>
 
 <template>
-  <div class="flex gap-4">
+  <div class="flex gap-4" data-testid="search-input-container">
     <UInput
       :model-value="modelValue"
       :placeholder="placeholder"
@@ -41,6 +41,7 @@ function handleSearch() {
       :loading="loading"
       :disabled="disabled"
       class="flex-1"
+      data-testid="search-input-field"
       @update:model-value="$emit('update:modelValue', $event)"
       @keyup="handleKeyup"
     >
@@ -52,6 +53,7 @@ function handleSearch() {
       :size="size"
       :loading="loading"
       :disabled="disabled || !modelValue.trim()"
+      data-testid="search-button"
       @click="handleSearch"
     >
       Search

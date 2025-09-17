@@ -25,6 +25,8 @@ export default defineNuxtConfig({
       // Static assets - cache for 1 year
       '/_nuxt/**': { headers: { 'cache-control': 's-maxage=31536000' } },
     },
+    // Enable compression
+    compressPublicAssets: true,
   },
 
   // Performance optimizations
@@ -33,6 +35,8 @@ export default defineNuxtConfig({
     typedPages: true, // Enable typed pages for better DX
     // Add compatibility for Nuxt UI with Nuxt 4
     clientNodeCompat: true,
+    // Enable view transitions for better UX
+    viewTransition: true,
   },
 
   modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxt/scripts'],
@@ -93,6 +97,19 @@ export default defineNuxtConfig({
       apiBaseUrl: 'http://localhost:8000',
       apiDomain: 'http://localhost:8000',
       websiteDomain: 'http://localhost:3000',
+    },
+  },
+
+  // Vite optimizations for better performance
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['vue', 'vue-router'],
+          },
+        },
+      },
     },
   },
 

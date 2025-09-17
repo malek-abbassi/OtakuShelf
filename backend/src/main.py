@@ -22,9 +22,8 @@ from .db.core import create_db_and_tables
 from .dependencies import (
     LoggingMiddleware,
     ErrorHandlingMiddleware,
-    get_health_check_info,
 )
-from .routers import users_router, watchlist_router
+from .routers import users_router, watchlist_router, health_router
 
 # Load settings
 settings = get_settings()
@@ -102,13 +101,7 @@ app.add_middleware(
 # Include routers
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(watchlist_router, prefix="/api/v1")
-
-
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring."""
-    return get_health_check_info()
+app.include_router(health_router)
 
 
 # Root endpoint

@@ -1,5 +1,9 @@
 <template>
   <UApp>
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+    <ToastContainer />
+    <NetworkStatus />
   </UApp>
 </template>

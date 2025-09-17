@@ -32,11 +32,12 @@ async function handleSignOut() {
 </script>
 
 <template>
-  <div class="flex justify-center items-center p-4">
+  <div class="flex justify-center items-center p-4" data-testid="auth-view">
     <AuthForm
       v-if="!isLoggedIn"
       :is-sign-up="isSignUp"
       :is-loading="isLoading"
+      data-testid="auth-form"
       @submit="handleSubmit"
       @toggle-mode="toggleMode"
     />
@@ -44,6 +45,7 @@ async function handleSignOut() {
     <UserProfile
       v-else
       :user-info="userProfile"
+      data-testid="user-profile"
       @sign-out="handleSignOut"
     />
   </div>

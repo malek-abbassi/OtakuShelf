@@ -59,9 +59,9 @@ watch(() => props.isSignUp, () => {
 </script>
 
 <template>
-  <UCard class="w-full max-w-md">
+  <UCard class="w-full max-w-md mx-auto" data-testid="auth-form-card">
     <template #header>
-      <div class="text-center">
+      <div class="text-center" data-testid="auth-form-header">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ isSignUp ? 'Create Account' : 'Welcome Back' }}
         </h2>
@@ -75,12 +75,14 @@ watch(() => props.isSignUp, () => {
       :schema="currentSchema"
       :state="state"
       class="space-y-6"
+      data-testid="auth-form"
       @submit="onSubmit"
     >
       <UFormField
         label="Email"
         name="email"
         required
+        data-testid="email-field"
       >
         <UInput
           v-model="state.email"
@@ -90,6 +92,7 @@ watch(() => props.isSignUp, () => {
           size="lg"
           :disabled="isLoading"
           class="w-full"
+          data-testid="email-input"
         />
       </UFormField>
 
@@ -98,6 +101,7 @@ watch(() => props.isSignUp, () => {
         label="Username"
         name="username"
         required
+        data-testid="username-field"
       >
         <UInput
           v-model="state.username"
@@ -107,6 +111,7 @@ watch(() => props.isSignUp, () => {
           size="lg"
           :disabled="isLoading"
           class="w-full"
+          data-testid="username-input"
         />
       </UFormField>
 
@@ -114,6 +119,7 @@ watch(() => props.isSignUp, () => {
         v-if="isSignUp"
         label="Full Name"
         name="fullName"
+        data-testid="fullname-field"
       >
         <UInput
           v-model="state.fullName"
@@ -123,6 +129,7 @@ watch(() => props.isSignUp, () => {
           size="lg"
           :disabled="isLoading"
           class="w-full"
+          data-testid="fullname-input"
         />
       </UFormField>
 
@@ -130,6 +137,7 @@ watch(() => props.isSignUp, () => {
         label="Password"
         name="password"
         required
+        data-testid="password-field"
       >
         <UInput
           v-model="state.password"
@@ -139,6 +147,7 @@ watch(() => props.isSignUp, () => {
           size="lg"
           :disabled="isLoading"
           class="w-full"
+          data-testid="password-input"
         >
           <template #trailing>
             <UButton
@@ -147,6 +156,7 @@ watch(() => props.isSignUp, () => {
               color="neutral"
               variant="link"
               :padded="false"
+              data-testid="password-toggle"
               @click="showPassword = !showPassword"
             />
           </template>
@@ -158,13 +168,14 @@ watch(() => props.isSignUp, () => {
         block
         size="lg"
         :loading="isLoading"
+        data-testid="auth-submit-button"
       >
         {{ isSignUp ? 'Create Account' : 'Sign In' }}
       </UButton>
     </UForm>
 
     <template #footer>
-      <div class="text-center">
+      <div class="text-center" data-testid="auth-form-footer">
         <p class="text-sm text-gray-600 dark:text-gray-400">
           {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
         </p>
@@ -173,6 +184,7 @@ watch(() => props.isSignUp, () => {
           size="sm"
           class="mt-1"
           :disabled="isLoading"
+          data-testid="auth-toggle-mode"
           @click="handleToggleMode"
         >
           {{ isSignUp ? 'Sign In' : 'Sign Up' }}

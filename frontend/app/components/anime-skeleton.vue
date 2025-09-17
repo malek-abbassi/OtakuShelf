@@ -13,13 +13,12 @@ const _props = withDefaults(defineProps<Props>(), {
     <UCard
       v-for="n in count"
       :key="n"
-      class="animate-pulse"
     >
-      <div class="h-64 bg-gray-200 dark:bg-gray-700 rounded-t-lg" />
+      <USkeleton class="h-64 rounded-t-lg rounded-b-none" />
       <div class="p-4 space-y-3">
-        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+        <USkeleton class="h-4 w-3/4" />
+        <USkeleton class="h-4 w-1/2" />
+        <USkeleton class="h-4 w-1/4" />
       </div>
     </UCard>
   </div>

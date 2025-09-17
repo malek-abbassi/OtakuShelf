@@ -1,4 +1,20 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6378:6379" # Expose to host for local development
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
   db:
     image: postgres:latest
     environment:
@@ -46,6 +62,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - DATABASE_URL=postgresql://username:password@backend_db:5432/otaku_shelf
+      - REDIS_URL=redis://redis:6379
       - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
       - SUPERTOKENS_API_KEY=someApiKey123123123123 # should match with supertokens setup and 20 chars long at least
       - API_DOMAIN=http://localhost:8000
@@ -54,6 +71,7 @@ services:
     depends_on:
       - supertokens
       - backend_db
+      - redis
     restart: unless-stopped
     networks:
       - app_network
@@ -102,6 +120,7 @@ services:
 volumes:
   supertokens_data:
   backend_db_data:
+  redis_data:
 
 networks:
   app_network:

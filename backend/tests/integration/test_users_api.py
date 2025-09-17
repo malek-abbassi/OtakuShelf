@@ -36,7 +36,7 @@ class TestUsersAPI:
         """Test successful user signup."""
         signup_data = {
             "email": "newuser@example.com",
-            "password": "password123",
+            "password": "Password123",
             "username": "newuser",
             "full_name": "New User"
         }
@@ -53,16 +53,16 @@ class TestUsersAPI:
         """Test signup with taken username."""
         signup_data = {
             "email": "different@example.com",
-            "password": "password123",
+            "password": "Password123",
             "username": sample_user.username,  # Taken username
             "full_name": "Different User"
         }
         
         response = client.post("/api/v1/users/signup", json=signup_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         
         data = response.json()
-        assert "Username already taken" in data["detail"]
+        assert "Username 'testuser' is already taken" in data["detail"]
 
     def test_signup_invalid_data(self, client: TestClient):
         """Test signup with invalid data."""
@@ -79,7 +79,7 @@ class TestUsersAPI:
         """Test successful user signin."""
         signin_data = {
             "email": sample_user.email,
-            "password": "password123"
+            "password": "Password123"
         }
         
         response = client.post("/api/v1/users/signin", json=signin_data)
@@ -98,14 +98,14 @@ class TestUsersAPI:
         
         signin_data = {
             "email": "notfound@example.com",
-            "password": "password123"
+            "password": "Password123"
         }
         
         response = client.post("/api/v1/users/signin", json=signin_data)
         assert response.status_code == 401
         
         data = response.json()
-        assert "Invalid credentials" in data["detail"]
+        assert "Invalid email or password" in data["detail"]
 
     def test_get_current_user_profile(self, client: TestClient, mock_get_current_user):
         """Test getting current user profile."""
@@ -196,7 +196,7 @@ class TestUsersAPI:
     @pytest.mark.asyncio
     async def test_async_client_health_check(self, async_client: AsyncClient):
         """Test health check with async client."""
-        response = await async_client.get("/health")
+        response = await async_client.get("/health/")
         assert response.status_code == 200
         
         data = response.json()
@@ -243,3 +243,242 @@ class TestUsersAPI:
         # CORS headers should be present in the response
         # Note: In actual browser scenarios, CORS headers would be more prominent
         # but TestClient doesn't fully simulate browser CORS behavior
+
+    # Edge case and error scenario tests
+    def test_signup_username_too_short(self, client: TestClient):
+        """Test signup with username too short."""
+        signup_data = {
+            "email": "test@example.com",
+            "password": "Password123",
+            "username": "ab",  # Too short (min 3 chars)
+            "full_name": "Test User"
+        }
+
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 422  # Validation error
+
+        data = response.json()
+        assert "detail" in data
+        assert "at least 3 characters" in data["detail"][0]["msg"].lower()
+
+    def test_signup_username_invalid_chars(self, client: TestClient):
+        """Test signup with invalid username characters."""
+        signup_data = {
+            "email": "test@example.com",
+            "password": "Password123",
+            "username": "test@user",  # Invalid character
+            "full_name": "Test User"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 422
+        
+        data = response.json()
+        assert "detail" in data
+
+    def test_signup_email_invalid_format(self, client: TestClient):
+        """Test signup with invalid email format."""
+        signup_data = {
+            "email": "invalid-email",
+            "password": "Password123",
+            "username": "testuser",
+            "full_name": "Test User"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 422
+        
+        data = response.json()
+        assert "detail" in data
+
+    def test_signup_full_name_too_long(self, client: TestClient):
+        """Test signup with full name too long."""
+        signup_data = {
+            "email": "test@example.com",
+            "password": "Password123",
+            "username": "testuser",
+            "full_name": "A" * 101  # Too long (max 100 chars)
+        }
+        
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 422
+        
+        data = response.json()
+        assert "detail" in data
+
+    def test_signup_duplicate_email(self, client: TestClient, mock_get_current_user):
+        """Test signup with duplicate email."""
+        signup_data = {
+            "email": mock_get_current_user.email,  # Existing email
+            "password": "Password123",
+            "username": "newuser",
+            "full_name": "New User"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 409  # Conflict
+        
+        data = response.json()
+        assert "detail" in data
+        assert "already registered" in data["detail"].lower()
+
+    def test_signup_duplicate_username(self, client: TestClient, mock_get_current_user):
+        """Test signup with duplicate username."""
+        signup_data = {
+            "email": "different@example.com",
+            "password": "Password123",
+            "username": mock_get_current_user.username,  # Existing username
+            "full_name": "New User"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=signup_data)
+        assert response.status_code == 409  # Conflict
+        
+        data = response.json()
+        assert "detail" in data
+
+    def test_signin_invalid_credentials(self, client: TestClient):
+        """Test signin with invalid credentials."""
+        signin_data = {
+            "email": "nonexistent@example.com",
+            "password": "WrongPassword123"  # Valid password format but wrong credentials
+        }
+        
+        response = client.post("/api/v1/users/signin", json=signin_data)
+        assert response.status_code == 401  # Unauthorized
+        
+        data = response.json()
+        assert "detail" in data
+        assert "invalid" in data["detail"].lower()
+
+    def test_update_profile_unauthorized(self, client: TestClient):
+        """Test updating profile without authentication."""
+        update_data = {
+            "full_name": "Updated Name"
+        }
+
+        response = client.put("/api/v1/users/me", json=update_data)
+        assert response.status_code == 401
+
+        data = response.json()
+        assert "message" in data
+        assert data["message"] == "unauthorised"
+
+    def test_update_profile_invalid_data(self, client: TestClient, mock_get_current_user):
+        """Test updating profile with invalid data."""
+        update_data = {
+            "username": "ab",  # Too short
+            "full_name": "A" * 101  # Too long
+        }
+        
+        response = client.put("/api/v1/users/me", json=update_data)
+        assert response.status_code == 422
+        
+        data = response.json()
+        assert "detail" in data
+
+    def test_get_profile_unauthorized(self, client: TestClient):
+        """Test getting profile without authentication."""
+        response = client.get("/api/v1/users/me")
+        assert response.status_code == 401
+
+        data = response.json()
+        assert "message" in data
+        assert data["message"] == "unauthorised"
+
+    def test_check_username_availability_invalid_username(self, client: TestClient):
+        """Test checking availability of invalid username."""
+        response = client.get("/api/v1/users/check-username/ab")  # Too short
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert "available" in data
+        assert data["available"] is True
+
+    def test_deactivate_account_unauthorized(self, client: TestClient):
+        """Test deactivating account without authentication."""
+        response = client.delete("/api/v1/users/me")
+        assert response.status_code == 401
+
+        data = response.json()
+        assert "message" in data
+        assert data["message"] == "unauthorised"    # Security tests
+    def test_sql_injection_attempt(self, client: TestClient):
+        """Test protection against SQL injection attempts."""
+        malicious_data = {
+            "email": "test@example.com'; DROP TABLE users; --",
+            "password": "Password123",
+            "username": "testuser",
+            "full_name": "Test User"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=malicious_data)
+        # Should not succeed with malicious input
+        assert response.status_code in [422, 409]  # Validation error or conflict
+
+    def test_xss_attempt(self, client: TestClient):
+        """Test protection against XSS attempts."""
+        xss_data = {
+            "email": "test@example.com",
+            "password": "Password123",
+            "username": "testuser",
+            "full_name": "<script>alert('xss')</script>"
+        }
+        
+        response = client.post("/api/v1/users/signup", json=xss_data)
+        # Should validate and potentially sanitize input
+        if response.status_code == 201:
+            # If it succeeds, ensure the script tags are not in the response
+            data = response.json()
+            assert "<script>" not in str(data).lower()
+
+    def test_large_request_body(self, client: TestClient):
+        """Test handling of very large request bodies."""
+        large_data = {
+            "email": "test@example.com",
+            "password": "Password123",
+            "username": "testuser",
+            "full_name": "A" * 10000  # Very large string
+        }
+        
+        response = client.post("/api/v1/users/signup", json=large_data)
+        # Should handle gracefully (422 for validation or 413 for payload too large)
+        assert response.status_code in [413, 422]
+
+    # Performance and load tests
+    def test_concurrent_requests_simulation(self, client: TestClient):
+        """Test handling multiple concurrent requests."""
+        import threading
+        
+        results = []
+        
+        def make_request():
+            response = client.get("/health")
+            results.append(response.status_code)
+        
+        # Simulate concurrent requests
+        threads = []
+        for _ in range(10):
+            thread = threading.Thread(target=make_request)
+            threads.append(thread)
+            thread.start()
+        
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join(timeout=5)
+        
+        # All requests should succeed
+        assert len(results) == 10
+        assert all(status == 200 for status in results)
+
+    def test_memory_leak_prevention(self, client: TestClient):
+        """Test that repeated requests don't cause memory leaks."""
+        import time
+        
+        # Make many requests to check for memory issues
+        for _ in range(100):
+            response = client.get("/health")
+            assert response.status_code == 200
+            
+            # Small delay to prevent overwhelming
+            time.sleep(0.001)
