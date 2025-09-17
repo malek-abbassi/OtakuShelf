@@ -337,8 +337,12 @@ class TestUsersAPI:
         data = response.json()
         assert "detail" in data
 
-    def test_signin_invalid_credentials(self, client: TestClient):
+    def test_signin_invalid_credentials(self, client: TestClient, mock_supertokens_signin):
         """Test signin with invalid credentials."""
+        # Configure mock to return failure for this test
+        from supertokens_python.recipe.emailpassword.interfaces import WrongCredentialsError
+        mock_supertokens_signin.return_value = WrongCredentialsError()
+        
         signin_data = {
             "email": "nonexistent@example.com",
             "password": "WrongPassword123"  # Valid password format but wrong credentials
