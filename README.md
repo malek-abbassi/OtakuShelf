@@ -21,9 +21,11 @@ OtakuShelf is a modern, full-stack web application designed for anime enthusiast
 - **RESTful API**: Well-documented API endpoints for all operations
 - **Real-time Data**: Integration with AniList GraphQL API for up-to-date information
 - **Database Integration**: PostgreSQL with SQLModel ORM for robust data management
+- **Caching Layer**: Redis-backed caching system for improved performance
+- **Rate Limiting**: Configurable rate limiting to prevent abuse
 - **Modern UI**: Built with Nuxt.js and Nuxt UI for a polished user experience
 - **Type Safety**: Full TypeScript support on frontend, Pydantic models on backend
-- **Testing Suite**: Comprehensive unit and integration tests
+- **Comprehensive Testing**: Unit, integration, performance, security, and E2E tests
 - **Docker Support**: Complete containerization for easy deployment
 
 ## 🏗️ Architecture
@@ -33,7 +35,8 @@ graph TD
     A[Frontend<br/>Nuxt.js + Vue 3] --> B[Backend<br/>FastAPI + Python]
     B --> C[(Database<br/>PostgreSQL)]
     B --> D[SuperTokens<br/>Auth Service]
-    A --> E[AniList API<br/>GraphQL]
+    B --> E[(Cache<br/>Redis)]
+    A --> F[AniList API<br/>GraphQL]
     D --> C
 ```
 
@@ -163,6 +166,16 @@ pnpm run test        # Unit tests
 pnpm run test:e2e    # End-to-end tests
 ```
 
+### Test Coverage
+
+The project includes comprehensive testing across multiple dimensions:
+
+- **Unit Tests**: Individual function and component testing
+- **Integration Tests**: API endpoint and database interaction testing
+- **Performance Tests**: Load testing and response time validation
+- **Security Tests**: Vulnerability and injection attack prevention
+- **E2E Tests**: Full user journey testing with Playwright
+
 ## 📚 API Documentation
 
 When running the backend, visit:
@@ -204,27 +217,46 @@ pnpm run test:coverage       # Run tests with coverage
 
 ```bash
 OtakuShelf/
-├── backend/
-│   ├── src/
-│   │   ├── main.py           # FastAPI application
-│   │   ├── config.py         # Application configuration
-│   │   ├── models/           # SQLModel database models
-│   │   ├── routers/          # API route handlers
-│   │   ├── auth/             # Authentication services
-│   │   └── db/               # Database configuration
-│   ├── tests/                # Test suites
-│   ├── pyproject.toml        # Python dependencies
-│   └── Dockerfile
-├── frontend/
-│   ├── app/
-│   │   ├── pages/            # Nuxt pages
-│   │   ├── components/       # Vue components
-│   │   └── composables/      # Vue composables
-│   ├── queries/              # GraphQL queries
-│   ├── package.json          # Node dependencies
-│   └── Dockerfile
-├── docker-compose.yml        # Docker orchestration
-└── README.md
+├── .github/
+│   └── workflows/           # CI/CD pipelines
+├── .vscode/
+│   └── settings.json        # VS Code workspace settings
+├── backend/                 # FastAPI backend service
+│   ├── src/                 # Source code
+│   │   ├── main.py          # FastAPI application
+│   │   ├── config.py        # Configuration management
+│   │   ├── cache.py         # Redis caching layer
+│   │   ├── rate_limit.py    # Rate limiting
+│   │   ├── models/          # Database models
+│   │   ├── routers/         # API endpoints
+│   │   ├── services/        # Business logic
+│   │   └── auth/            # Authentication
+│   ├── tests/               # Test suites
+│   │   ├── unit/            # Unit tests
+│   │   ├── integration/     # Integration tests
+│   │   ├── performance/     # Performance tests
+│   │   └── security/        # Security tests
+│   ├── pyproject.toml       # Python dependencies
+│   ├── Dockerfile           # Backend container
+│   └── README.md            # Backend documentation
+├── frontend/                # Nuxt.js frontend application
+│   ├── app/                 # Nuxt application
+│   │   ├── pages/           # File-based routing
+│   │   ├── components/      # Vue components
+│   │   ├── composables/     # Vue composables
+│   │   └── layouts/         # Page layouts
+│   ├── queries/             # GraphQL queries
+│   ├── tests/               # Test suites
+│   │   ├── unit/            # Unit tests
+│   │   ├── integration/     # Integration tests
+│   │   └── e2e/             # E2E tests
+│   ├── package.json         # Node dependencies
+│   ├── nuxt.config.ts       # Nuxt configuration
+│   ├── Dockerfile           # Frontend container
+│   └── README.md            # Frontend documentation
+├── docker-compose.yml       # Multi-service orchestration
+├── LICENSE                  # MIT License
+└── README.md               # Project documentation
 ```
 
 ## 🚀 Deployment
@@ -278,6 +310,8 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - **Linting**: Code quality checks with Ruff
 - **Unit Tests**: Comprehensive unit test coverage with pytest
 - **Integration Tests**: API endpoint testing with httpx
+- **Performance Tests**: Load testing and response time validation
+- **Security Tests**: Vulnerability and injection attack prevention
 - **Coverage**: Code coverage reporting with Codecov
 
 #### Frontend CI Pipeline
@@ -299,6 +333,8 @@ The pipeline implements quality gates that must pass before code can be merged:
 
 - ✅ **Backend tests must pass** (blocking)
 - ✅ **Frontend tests must pass** (blocking)
+- ✅ **Performance tests must pass** (blocking)
+- ✅ **Security tests must pass** (blocking)
 - ⚠️ **Security scan** (non-blocking, informational)
 
 ### 🏃‍♂️ Running Locally

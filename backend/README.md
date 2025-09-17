@@ -24,7 +24,9 @@ The backend for OtakuShelf, a modern anime watchlist management system built wit
 - **Auto Documentation**: Interactive API docs with Swagger/ReDoc
 - **Environment Configuration**: Flexible configuration management
 - **Database Migrations**: Automatic table creation and management
-- **Testing Suite**: Comprehensive unit and integration tests
+- **Caching Layer**: Redis-backed caching for improved performance
+- **Rate Limiting**: Configurable rate limiting to prevent abuse
+- **Testing Suite**: Unit, integration, performance, and security tests
 - **Docker Support**: Complete containerization
 
 ## 🏗️ Architecture
@@ -51,6 +53,7 @@ Backend Service
 - **Database**: PostgreSQL - Robust relational database
 - **ORM**: SQLModel - SQL databases in Python, designed for simplicity
 - **Authentication**: SuperTokens - Secure, open-source authentication
+- **Caching**: Redis - High-performance caching layer
 - **Validation**: Pydantic - Data validation and settings management
 - **Package Management**: uv - Fast Python package installer and resolver
 - **Linting**: Ruff - Fast Python linter and formatter
@@ -60,6 +63,7 @@ Backend Service
 
 - **Python 3.12+**
 - **PostgreSQL 15+** (or Docker for local development)
+- **Redis** (or Docker for local development)
 - **uv** (Python package manager)
 - **SuperTokens** instance (via Docker Compose)
 
@@ -121,6 +125,9 @@ Create a `.env` file in the backend directory:
 # Database Configuration
 DATABASE_URL=postgresql://username:password@localhost:5432/otaku_shelf
 
+# Redis Configuration (Optional)
+REDIS_URL=redis://localhost:6378
+
 # SuperTokens Configuration
 SUPERTOKENS_CONNECTION_URI=http://localhost:3567
 SUPERTOKENS_API_KEY=your-api-key-here
@@ -170,6 +177,10 @@ tests/
 ├── integration/             # Integration tests
 │   ├── test_users_api.py
 │   └── test_watchlist_api.py
+├── performance/             # Performance tests
+│   └── test_performance.py  # Load testing and response times
+├── security/                # Security tests
+│   └── test_security.py     # Vulnerability and injection tests
 ├── conftest.py             # Test configuration
 └── factories/              # Test data factories
 ```
@@ -196,29 +207,43 @@ backend/
 ├── src/
 │   ├── main.py              # FastAPI application entry point
 │   ├── config.py            # Application configuration
+│   ├── cache.py             # Caching layer implementation
+│   ├── rate_limit.py        # Rate limiting functionality
 │   ├── dependencies.py      # Dependency injection
+│   ├── exceptions.py        # Custom exceptions
+│   ├── responses.py         # Response models
 │   ├── schemas.py           # Pydantic schemas
 │   ├── auth/
 │   │   ├── __init__.py
-│   │   ├── service.py       # Authentication service
 │   │   └── dependencies.py  # Auth dependencies
 │   ├── db/
 │   │   ├── __init__.py
-│   │   ├── core.py          # Database connection and setup
-│   │   └── models/          # Database models
+│   │   └── core.py          # Database connection and setup
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── user.py          # User model
 │   │   └── watchlist.py     # Watchlist model
-│   └── routers/
-│       ├── __init__.py
-│       ├── users.py         # User API routes
-│       └── watchlist.py     # Watchlist API routes
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── health.py        # Health check routes
+│   │   ├── users.py         # User API routes
+│   │   └── watchlist.py     # Watchlist API routes
+│   └── services/
+│       ├── auth_service.py      # Authentication service
+│       ├── user_service.py      # User management service
+│       └── watchlist_service.py # Watchlist service
 ├── tests/                   # Test suite
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   ├── performance/         # Performance tests
+│   ├── security/            # Security tests
+│   ├── conftest.py          # Test configuration
+│   └── factories/           # Test data factories
 ├── pyproject.toml           # Project configuration
-├── Dockerfile               # Docker configuration
 ├── uv.lock                  # Dependency lock file
-└── pytest.ini              # Test configuration
+├── pytest.ini               # Test configuration
+├── Dockerfile               # Docker configuration
+└── README.md
 ```
 
 ## 📡 API Endpoints
@@ -337,6 +362,8 @@ The backend uses GitHub Actions for automated testing and quality assurance. The
 
 - **Unit Tests**: Individual function and class testing with pytest
 - **Integration Tests**: API endpoint and database interaction testing
+- **Performance Tests**: Load testing and response time validation
+- **Security Tests**: Vulnerability and injection attack prevention
 - **Coverage Analysis**: Code coverage reporting with coverage.py
 - **Test Results**: Detailed test output and failure analysis
 
@@ -350,6 +377,8 @@ The backend uses GitHub Actions for automated testing and quality assurance. The
 The CI pipeline enforces the following quality standards:
 
 - ✅ **All tests must pass** (blocking requirement)
+- ✅ **Performance tests must pass** (blocking requirement)
+- ✅ **Security tests must pass** (blocking requirement)
 - ✅ **Code coverage minimum 80%** (recommended)
 - ✅ **No critical security vulnerabilities** (blocking)
 - ✅ **Linting standards met** (blocking)
@@ -371,6 +400,8 @@ uv run pytest --cov=src --cov-report=term-missing
 # Run specific test categories
 uv run pytest tests/unit/ -v
 uv run pytest tests/integration/ -v
+uv run pytest tests/performance/ -v
+uv run pytest tests/security/ -v
 ```
 
 ### 📈 Coverage Reports

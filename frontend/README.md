@@ -32,8 +32,9 @@ The frontend for OtakuShelf, a modern, responsive web application for anime disc
 - **Static Generation**: Pre-rendered pages for optimal performance
 - **Type Safety**: Full TypeScript support throughout the application
 - **Component Library**: Consistent UI with Nuxt UI components
-- **GraphQL Integration**: Efficient data fetching with GraphQL
+- **GraphQL Integration**: Efficient data fetching with GraphQL queries
 - **State Management**: Reactive state with Vue 3 Composition API
+- **End-to-End Testing**: Comprehensive E2E tests with Playwright
 - **Testing Suite**: Unit and E2E tests with Vitest and Playwright
 
 ## 🏗️ Architecture
@@ -210,10 +211,15 @@ tests/
 │   ├── components/          # Component tests
 │   ├── composables/         # Composable tests
 │   └── utils/               # Utility tests
-└── integration/             # E2E tests
-    ├── auth.spec.ts         # Authentication tests
-    ├── search.spec.ts       # Search functionality
-    └── watchlist.spec.ts    # Watchlist tests
+├── integration/             # Integration tests
+│   ├── auth.spec.ts         # Authentication tests
+│   ├── search.spec.ts       # Search functionality
+│   └── watchlist.spec.ts    # Watchlist tests
+└── e2e/                     # End-to-end tests
+    ├── anime.test.ts        # Anime search and details
+    ├── auth-watchlist.test.ts # Authentication and watchlist
+    ├── interactions.test.ts # User interactions
+    └── navigation.test.ts   # Navigation flows
 ```
 
 ## 🛠️ Development
@@ -235,40 +241,47 @@ frontend/
 ├── app/
 │   ├── app.vue              # Root component
 │   ├── app.config.ts        # App configuration
+│   ├── error.vue            # Error page
 │   ├── pages/               # File-based routing
 │   │   ├── index.vue        # Homepage
-│   │   ├── anime/
-│   │   │   └── [id].vue     # Dynamic anime page
-│   │   ├── watchlist.vue    # Watchlist page
+│   │   ├── anime.vue        # Anime search and details
+│   │   ├── watchlist.vue    # User watchlist
 │   │   ├── auth.vue         # Authentication page
-│   │   └── settings.vue     # Settings page
+│   │   ├── settings.vue     # User settings
+│   │   ├── about.vue        # About page
+│   │   ├── privacy.vue      # Privacy policy
+│   │   └── terms.vue        # Terms of service
 │   ├── components/          # Vue components
-│   │   ├── anime-card.vue   # Anime card component
-│   │   ├── anime-search-enhanced.vue
-│   │   ├── auth-form.vue    # Authentication form
-│   │   ├── watchlist-card.vue
-│   │   └── ui/              # Reusable UI components
+│   │   ├── anime-*.vue      # Anime-related components
+│   │   ├── auth-*.vue       # Authentication components
+│   │   ├── watchlist-*.vue  # Watchlist components
+│   │   ├── ui/              # Reusable UI components
+│   │   └── *-state.vue      # State management components
 │   ├── composables/         # Vue composables
 │   │   ├── use-auth.ts      # Authentication logic
 │   │   ├── use-ani-list.ts  # AniList API integration
 │   │   ├── use-watchlist.ts # Watchlist management
-│   │   └── use-anime-utils.ts
+│   │   └── use-anime-*.ts   # Anime utilities
 │   ├── layouts/             # Page layouts
 │   │   └── default.vue      # Default layout
 │   ├── middleware/          # Route middleware
-│   └── types/               # TypeScript types
+│   ├── types/               # TypeScript types
+│   └── assets/              # Static assets
 ├── queries/                 # GraphQL queries
-│   ├── anime.ts             # Anime-related queries
-│   └── user.ts              # User-related queries
+│   └── anime.ts             # Anime-related queries
+├── tests/                   # Test suites
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── e2e/                 # End-to-end tests
 ├── public/                  # Static assets
-├── server/                  # Server-side code
-├── types/                   # Global type definitions
 ├── package.json             # Dependencies and scripts
+├── pnpm-lock.yaml           # Dependency lock file
 ├── nuxt.config.ts           # Nuxt configuration
 ├── tailwind.config.js       # Tailwind configuration
 ├── vitest.config.ts         # Test configuration
 ├── playwright.config.ts     # E2E test configuration
-└── eslint.config.mjs        # Linting configuration
+├── eslint.config.mjs        # Linting configuration
+└── Dockerfile               # Docker configuration
 ```
 
 ## 🎨 Styling & Theming
@@ -478,18 +491,26 @@ pnpm test:coverage
 
 ### 🎭 E2E Testing
 
-End-to-end tests cover critical user journeys:
+End-to-end tests cover critical user journeys across multiple browsers:
 
 ```bash
 # Run E2E tests in headed mode (visible browser)
 pnpm test:e2e:ui
 
 # Run specific test file
-pnpm test:e2e -- tests/e2e/auth.spec.ts
+pnpm test:e2e -- tests/e2e/auth-watchlist.test.ts
 
 # Run tests in specific browser
 pnpm test:e2e -- --project=chromium
 ```
+
+#### E2E Test Coverage
+
+- **Authentication Flow**: User registration, login, logout
+- **Anime Search**: Search functionality and results display
+- **Watchlist Management**: Add, remove, and track anime
+- **Navigation**: Page transitions and routing
+- **User Interactions**: Form submissions and UI interactions
 
 ---
 

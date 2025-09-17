@@ -14,7 +14,7 @@ export default withNuxt(
       semi: true,
       quotes: 'single',
     },
-    ignores: ['.pnpm-store/**'],
+    ignores: ['.pnpm-store/**', 'README.md'],
   }, {
     rules: {
       'ts/consistent-type-definitions': ['error', 'type'],
