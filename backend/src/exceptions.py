@@ -232,6 +232,29 @@ class InvalidWatchStatusError(ValidationError):
         )
 
 
+class RateLimitExceededError(OtakuShelfException):
+    """Exception raised when rate limit is exceeded."""
+
+    def __init__(self, limit: int, window: int, remaining: int, reset_time: int):
+        super().__init__(
+            f"Rate limit exceeded. {remaining} requests remaining.",
+            status_code=429,
+            error_code="RATE_LIMIT_EXCEEDED",
+            details={
+                "limit": limit,
+                "window": window,
+                "remaining": remaining,
+                "reset_time": reset_time
+            },
+            headers={
+                "X-RateLimit-Limit": str(limit),
+                "X-RateLimit-Remaining": str(remaining),
+                "X-RateLimit-Reset": str(reset_time),
+                "Retry-After": str(reset_time)
+            }
+        )
+
+
 def create_error_response(exception: OtakuShelfException) -> Dict[str, Any]:
     """Create a consistent error response dictionary from an exception."""
     return {

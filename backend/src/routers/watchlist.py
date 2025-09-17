@@ -46,7 +46,7 @@ async def add_to_watchlist(
 async def get_watchlist(
     current_user: Annotated[User, Depends(get_current_user)],
     watchlist_service: WatchlistServiceDep,
-    status_filter: Optional[str] = Query(None, description="Filter by watch status"),
+    status: Optional[str] = Query(None, description="Filter by watch status"),
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
 ):
@@ -56,7 +56,7 @@ async def get_watchlist(
     Returns paginated list of watchlist items with status counts.
     """
     result = watchlist_service.get_watchlist(
-        current_user.id, status_filter, skip, limit
+        current_user.id, status, skip, limit
     )
 
     # Convert to response format

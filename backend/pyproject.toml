@@ -9,6 +9,8 @@ dependencies = [
     "sqlmodel",
     "pydantic-settings",
     "psycopg2-binary",
+    "redis",
+    "psutil",
 ]
 
 [dependency-groups]

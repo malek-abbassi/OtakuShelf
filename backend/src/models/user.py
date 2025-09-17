@@ -7,7 +7,7 @@ from datetime import datetime, UTC
 from typing import Optional, TYPE_CHECKING, List
 
 from pydantic import EmailStr, field_validator, computed_field
-from sqlmodel import SQLModel, Field, Relationship, Column, String, Boolean, DateTime, Integer, Index
+from sqlmodel import SQLModel, Field, Relationship, Index
 from sqlalchemy import func
 
 if TYPE_CHECKING:

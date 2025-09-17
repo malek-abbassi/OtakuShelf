@@ -45,7 +45,7 @@ class WatchlistService:
     def get_watchlist(
         self,
         user_id: int,
-        status_filter: Optional[str] = None,
+        status: Optional[str] = None,
         skip: int = 0,
         limit: int = 20
     ) -> Dict[str, Any]:
@@ -53,8 +53,8 @@ class WatchlistService:
         try:
             query = select(WatchlistItem).where(WatchlistItem.user_id == user_id)
 
-            if status_filter:
-                query = query.where(WatchlistItem.status == status_filter)
+            if status:
+                query = query.where(WatchlistItem.status == status)
 
             # Get total count
             count_query = query.with_only_columns(func.count(WatchlistItem.id))

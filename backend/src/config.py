@@ -19,6 +19,12 @@ class Settings(BaseSettings):
         description="Database URL for SQLModel/SQLAlchemy",
     )
 
+    # Redis settings for caching
+    redis_url: str = Field(
+        default="redis://localhost:6379",
+        description="Redis URL for caching (optional)"
+    )
+
     # SuperTokens settings
     supertokens_connection_uri: str = Field(
         default="http://localhost:3567", description="SuperTokens core connection URI"

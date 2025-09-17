@@ -5,11 +5,10 @@ Defines anime watchlist schema with relationships to users.
 
 from datetime import datetime, UTC
 from enum import Enum
-from typing import Optional, TYPE_CHECKING, List
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import field_validator, computed_field
 from sqlmodel import SQLModel, Field, Relationship, Index
-from sqlalchemy import func
 
 if TYPE_CHECKING:
     from .user import User
@@ -128,6 +127,9 @@ class WatchlistItem(WatchlistItemBase, table=True):
         Index("ix_watchlist_user_anime", "user_id", "anime_id", unique=True),
         Index("ix_watchlist_status_created", "status", "created_at"),
         Index("ix_watchlist_score", "anime_score"),
+        Index("ix_watchlist_user_created", "user_id", "created_at"),
+        Index("ix_watchlist_user_updated", "user_id", "updated_at"),
+        Index("ix_watchlist_anime_status", "anime_id", "status"),
     )
 
     @computed_field
