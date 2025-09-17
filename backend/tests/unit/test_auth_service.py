@@ -5,7 +5,7 @@ Unit tests for AuthService.
 import pytest
 from sqlmodel import Session
 
-from src.auth.service import AuthService
+from src.services.auth_service import AuthService, UsernameTakenError, UserProfileNotFoundError
 from src.models import User
 
 
@@ -112,16 +112,14 @@ class TestAuthService:
     async def test_signup_user_success(self, test_session: Session, mock_supertokens_signup):
         """Test successful user signup."""
         auth_service = AuthService(test_session)
-        
-        success, message, user = await auth_service.signup_user(
+
+        user = await auth_service.signup_user(
             email="newuser@example.com",
             password="password123",
             username="newuser",
             full_name="New User"
         )
-        
-        assert success is True
-        assert message == "User created successfully"
+
         assert user is not None
         assert user.email == "newuser@example.com"
         assert user.username == "newuser"
@@ -132,30 +130,28 @@ class TestAuthService:
     async def test_signup_user_username_taken(self, test_session: Session, sample_user):
         """Test user signup with taken username."""
         auth_service = AuthService(test_session)
-        
-        success, message, user = await auth_service.signup_user(
-            email="different@example.com",
-            password="password123",
-            username=sample_user.username,  # Taken username
-            full_name="Different User"
-        )
-        
-        assert success is False
-        assert "Username already taken" in message
-        assert user is None
+
+        with pytest.raises(UsernameTakenError) as exc_info:
+            await auth_service.signup_user(
+                email="different@example.com",
+                password="password123",
+                username=sample_user.username,  # Taken username
+                full_name="Different User"
+            )
+
+        assert exc_info.value.status_code == 409
+        assert sample_user.username in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_signin_user_success(self, test_session: Session, sample_user, mock_supertokens_signin):
         """Test successful user signin."""
         auth_service = AuthService(test_session)
-        
-        success, message, user = await auth_service.signin_user(
+
+        user = await auth_service.signin_user(
             email=sample_user.email,
             password="password123"
         )
-        
-        assert success is True
-        assert message == "Sign in successful"
+
         assert user is not None
         assert user.id == sample_user.id
 
@@ -163,15 +159,15 @@ class TestAuthService:
     async def test_signin_user_not_found(self, test_session: Session, mock_supertokens_signin):
         """Test user signin when user not found in our database."""
         auth_service = AuthService(test_session)
-        
-        success, message, user = await auth_service.signin_user(
-            email="notfound@example.com",
-            password="password123"
-        )
-        
-        assert success is False
-        assert "User profile not found" in message
-        assert user is None
+
+        with pytest.raises(UserProfileNotFoundError) as exc_info:
+            await auth_service.signin_user(
+                email="notfound@example.com",
+                password="password123"
+            )
+
+        assert exc_info.value.status_code == 404
+        assert "User profile not found" in str(exc_info.value)
 
     def test_multiple_users_creation(self, test_session: Session):
         """Test creating multiple users."""

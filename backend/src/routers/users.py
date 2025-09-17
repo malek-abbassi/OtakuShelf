@@ -6,17 +6,23 @@ Handles user authentication, profile management, and user operations.
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
 
 from ..auth import get_current_user
-from ..db.core import get_session
-from ..dependencies import AuthServiceDep
+from ..dependencies import AuthServiceDep, UserServiceDep
 from ..models import User, UserUpdate, UserRead
 from ..schemas import (
     UserSignupRequest,
     UserLoginRequest,
     UserProfileResponse,
     SuccessResponse,
+)
+from ..services.auth_service import (
+    UsernameTakenError,
+    EmailAlreadyRegisteredError,
+    UserCreationError,
+    AuthException,
+    InvalidCredentialsError,
+    UserProfileNotFoundError,
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -34,20 +40,25 @@ async def signup(
 
     Creates a new user with SuperTokens authentication and database profile.
     """
-    success, message, user = await auth_service.signup_user(
-        email=signup_data.email,
-        password=signup_data.password,
-        username=signup_data.username,
-        full_name=signup_data.full_name,
-    )
-
-    if not success:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
-    return SuccessResponse(
-        message="User created successfully",
-        data={"user_id": user.id, "username": user.username},
-    )
+    try:
+        user = await auth_service.signup_user(
+            email=signup_data.email,
+            password=signup_data.password,
+            username=signup_data.username,
+            full_name=signup_data.full_name,
+        )
+        return SuccessResponse(
+            message="User created successfully",
+            data={"user_id": user.id, "username": user.username},
+        )
+    except UsernameTakenError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except EmailAlreadyRegisteredError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except UserCreationError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except AuthException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
 @router.post("/signin", response_model=SuccessResponse)
@@ -60,44 +71,32 @@ async def signin(
 
     Authenticates user with SuperTokens and returns user information.
     """
-    success, message, user = await auth_service.signin_user(
-        email=signin_data.email,
-        password=signin_data.password,
-    )
-
-    if not success:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=message)
-
-    return SuccessResponse(
-        message="Sign in successful",
-        data={"user_id": user.id, "username": user.username},
-    )
+    try:
+        user = await auth_service.signin_user(
+            email=signin_data.email,
+            password=signin_data.password,
+        )
+        return SuccessResponse(
+            message="Sign in successful",
+            data={"user_id": user.id, "username": user.username},
+        )
+    except InvalidCredentialsError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except UserProfileNotFoundError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
 @router.get("/me", response_model=UserProfileResponse)
 async def get_current_user_profile(
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     """
     Get current user's profile information.
 
     Returns detailed profile including watchlist count.
     """
-    # Count watchlist items
-    watchlist_count = (
-        len(current_user.watchlist_items) if current_user.watchlist_items else 0
-    )
-
-    return UserProfileResponse(
-        id=current_user.id,
-        username=current_user.username,
-        email=current_user.email,
-        full_name=current_user.full_name,
-        is_active=current_user.is_active,
-        created_at=current_user.created_at,
-        watchlist_count=watchlist_count,
-    )
+    return UserProfileResponse(**user_service.get_user_profile_data(current_user))
 
 
 @router.put("/me", response_model=UserRead)
@@ -105,6 +104,7 @@ async def update_current_user_profile(
     user_update: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     auth_service: AuthServiceDep,
+    user_service: UserServiceDep,
 ):
     """
     Update current user's profile information.
@@ -118,16 +118,9 @@ async def update_current_user_profile(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
             )
 
-    # Update user fields
-    update_data = user_update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(current_user, field, value)
-
-    auth_service.db.add(current_user)
-    auth_service.db.commit()
-    auth_service.db.refresh(current_user)
-
-    return UserRead.model_validate(current_user)
+    # Update user
+    updated_user = user_service.update_user(current_user, user_update)
+    return UserRead.model_validate(updated_user)
 
 
 @router.get("/check-username/{username}", response_model=dict)
@@ -154,15 +147,12 @@ async def check_username_availability(
 @router.delete("/me", response_model=SuccessResponse)
 async def deactivate_current_user(
     current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     """
     Deactivate current user account.
 
     Sets user as inactive instead of deleting to preserve data integrity.
     """
-    current_user.is_active = False
-    db.add(current_user)
-    db.commit()
-
+    user_service.deactivate_user(current_user)
     return SuccessResponse(message="Account deactivated successfully")

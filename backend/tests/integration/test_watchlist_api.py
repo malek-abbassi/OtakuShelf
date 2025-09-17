@@ -47,10 +47,11 @@ class TestWatchlistAPI:
         }
         
         response = client.post("/api/v1/watchlist", json=watchlist_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         
         data = response.json()
-        assert "already in watchlist" in data["detail"]
+        assert "error" in data
+        assert "already in your watchlist" in data["error"]["message"]
 
     def test_add_to_watchlist_unauthorized(self, client: TestClient):
         """Test adding to watchlist without authentication."""
@@ -144,12 +145,13 @@ class TestWatchlistAPI:
         update_data = {
             "status": "completed"
         }
-        
+
         response = client.put("/api/v1/watchlist/99999", json=update_data)
         assert response.status_code == 404
-        
+
         data = response.json()
-        assert "not found" in data["detail"].lower()
+        assert "error" in data
+        assert "not found" in data["error"]["message"].lower()
 
     def test_update_watchlist_item_unauthorized(self, client: TestClient, sample_watchlist_item):
         """Test updating watchlist item without authentication."""
@@ -175,7 +177,8 @@ class TestWatchlistAPI:
         assert response.status_code == 404
         
         data = response.json()
-        assert "not found" in data["detail"].lower()
+        assert "error" in data
+        assert "not found" in data["error"]["message"].lower()
 
     def test_delete_watchlist_item_unauthorized(self, client: TestClient, sample_watchlist_item):
         """Test deleting watchlist item without authentication."""

@@ -13,7 +13,7 @@ from supertokens_python.recipe.session import SessionContainer
 
 from ..db.core import get_session
 from ..models import User
-from .service import AuthService
+from ..services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 

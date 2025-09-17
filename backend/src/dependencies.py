@@ -12,9 +12,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
-from .auth.service import AuthService
+from .auth import AuthService
 from .db.core import get_session, engine
 from .config import get_settings
+from .exceptions import OtakuShelfException
+from .responses import HealthResponse
+from .services.user_service import UserService
+from .services.watchlist_service import WatchlistService
 
 # Set up logging
 logging.basicConfig(
@@ -54,28 +58,54 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
-    """Middleware for global error handling."""
+    """Middleware for global error handling with consistent error responses."""
 
     async def dispatch(self, request: Request, call_next):
         try:
             response = await call_next(request)
             return response
-        except HTTPException:
-            # Re-raise HTTP exceptions to be handled by FastAPI
-            raise
+        except OtakuShelfException as e:
+            # Handle custom OtakuShelf exceptions with structured error response
+            from .exceptions import create_error_response
+            return JSONResponse(
+                status_code=e.status_code,
+                content={
+                    "success": False,
+                    **create_error_response(e)
+                },
+                headers=e.headers
+            )
+        except HTTPException as e:
+            # Handle FastAPI HTTP exceptions
+            return JSONResponse(
+                status_code=e.status_code,
+                content={
+                    "success": False,
+                    "error": {
+                        "code": getattr(e, "error_code", "HTTP_EXCEPTION"),
+                        "message": e.detail,
+                        "details": {}
+                    }
+                },
+                headers=getattr(e, "headers", None),
+            )
         except Exception as e:
             # Log unexpected errors
             logger.error(f"Unexpected error: {str(e)}", exc_info=True)
 
-            # Return generic error response in production
-            error_response = JSONResponse(
+            # Return generic error response
+            error_detail = "Internal server error" if settings.environment == "production" else str(e)
+            return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={
-                    "detail": "Internal server error" if settings.environment == "production" else str(e)
+                    "success": False,
+                    "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": error_detail,
+                        "details": {}
+                    }
                 },
             )
-            
-            return error_response
 
 
 # Database dependency with proper error handling
@@ -106,15 +136,28 @@ def get_auth_service(db: Session = Depends(get_session)) -> AuthService:
     return AuthService(db)
 
 
+def get_user_service(db: Session = Depends(get_session)) -> UserService:
+    """Get UserService instance with database session."""
+    return UserService(db)
+
+
+def get_watchlist_service(db: Session = Depends(get_session)) -> WatchlistService:
+    """Get WatchlistService instance with database session."""
+    return WatchlistService(db)
+
+
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+WatchlistServiceDep = Annotated[WatchlistService, Depends(get_watchlist_service)]
 
 
 # Health check dependencies
-def get_health_check_info():
+def get_health_check_info() -> HealthResponse:
     """Get application health check information."""
-    return {
-        "status": "healthy",
-        "environment": settings.environment,
-        "app_name": settings.app_name,
-        "timestamp": time.time(),
-    }
+    return HealthResponse(
+        status="healthy",
+        version="1.0.0",
+        environment=settings.environment,
+        timestamp=time.time(),
+        database=True,  # TODO: Add actual database health check
+    )

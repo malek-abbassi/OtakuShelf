@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
@@ -79,10 +79,11 @@ def test_db():
 
 
 @pytest.fixture
-def test_session(test_db) -> Generator[Session, None, None]:
+def test_session(test_db) -> Session:
     """Create a test database session."""
-    with Session(test_db) as session:
-        yield session
+    session = Session(test_db)
+    yield session
+    session.close()
 
 
 @pytest.fixture
@@ -188,7 +189,7 @@ def mock_supertokens_signup(mocker):
     mock_result.recipe_user_id = RecipeUserId("test-st-user-id-123")
     
     return mocker.patch(
-        "src.auth.service.sign_up",
+        "src.services.auth_service.sign_up",
         return_value=mock_result
     )
 
@@ -211,7 +212,7 @@ def mock_supertokens_signin(mocker):
     mock_result.recipe_user_id = RecipeUserId("test-st-user-id-123")
     
     return mocker.patch(
-        "src.auth.service.sign_in",
+        "src.services.auth_service.sign_in",
         return_value=mock_result
     )
 
@@ -229,6 +230,15 @@ def authenticated_user_headers():
 def mock_get_current_user(sample_user):
     """Mock the get_current_user dependency."""
     from src.auth.dependencies import get_current_user, get_current_user_id
+    from supertokens_python.recipe.session.framework.fastapi import verify_session
+    
+    # Create a mock session container
+    mock_session = type('MockSession', (), {
+        'get_user_id': lambda: sample_user.supertokens_user_id
+    })()
+    
+    def _verify_session():
+        return mock_session
     
     def _get_current_user_id():
         return sample_user.supertokens_user_id
@@ -237,13 +247,13 @@ def mock_get_current_user(sample_user):
         return sample_user
     
     # Override dependencies in the FastAPI app
+    main.app.dependency_overrides[verify_session] = _verify_session
     main.app.dependency_overrides[get_current_user_id] = _get_current_user_id
     main.app.dependency_overrides[get_current_user] = _get_current_user
     
     yield sample_user
     
     # Clean up overrides
-    if get_current_user_id in main.app.dependency_overrides:
-        del main.app.dependency_overrides[get_current_user_id]
-    if get_current_user in main.app.dependency_overrides:
-        del main.app.dependency_overrides[get_current_user]
+    for dep in [verify_session, get_current_user_id, get_current_user]:
+        if dep in main.app.dependency_overrides:
+            del main.app.dependency_overrides[dep]

@@ -36,7 +36,7 @@ class TestUsersAPI:
         """Test successful user signup."""
         signup_data = {
             "email": "newuser@example.com",
-            "password": "password123",
+            "password": "Password123",
             "username": "newuser",
             "full_name": "New User"
         }
@@ -53,16 +53,16 @@ class TestUsersAPI:
         """Test signup with taken username."""
         signup_data = {
             "email": "different@example.com",
-            "password": "password123",
+            "password": "Password123",
             "username": sample_user.username,  # Taken username
             "full_name": "Different User"
         }
         
         response = client.post("/api/v1/users/signup", json=signup_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         
         data = response.json()
-        assert "Username already taken" in data["detail"]
+        assert "Username 'testuser' is already taken" in data["detail"]
 
     def test_signup_invalid_data(self, client: TestClient):
         """Test signup with invalid data."""
@@ -79,7 +79,7 @@ class TestUsersAPI:
         """Test successful user signin."""
         signin_data = {
             "email": sample_user.email,
-            "password": "password123"
+            "password": "Password123"
         }
         
         response = client.post("/api/v1/users/signin", json=signin_data)
@@ -98,14 +98,14 @@ class TestUsersAPI:
         
         signin_data = {
             "email": "notfound@example.com",
-            "password": "password123"
+            "password": "Password123"
         }
         
         response = client.post("/api/v1/users/signin", json=signin_data)
         assert response.status_code == 401
         
         data = response.json()
-        assert "Invalid credentials" in data["detail"]
+        assert "Invalid email or password" in data["detail"]
 
     def test_get_current_user_profile(self, client: TestClient, mock_get_current_user):
         """Test getting current user profile."""

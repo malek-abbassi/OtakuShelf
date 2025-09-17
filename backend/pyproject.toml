@@ -34,3 +34,31 @@ package = false
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=85",
+    "--no-cov-on-fail",
+    "-p no:warnings"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "auth: Authentication related tests",
+    "watchlist: Watchlist related tests",
+    "database: Database related tests"
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
